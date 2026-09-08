@@ -1,17 +1,162 @@
-.app {
-  max-width: 40rem;
-  margin: 4rem auto;
-  padding: 0 1rem;
-  font-family: system-ui, sans-serif;
+:root {
+  --surface: #ffffff;
+  --ink: #16191d;
+  --ink-muted: #5c6470;
+  --line: #e3e6ea;
+  --debit: #b42318;
+  --credit: #1a7f37;
+  --accent: #2f5bea;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #14171c;
+    --ink: #e8eaed;
+    --ink-muted: #9aa3af;
+    --line: #2a2f37;
+    --debit: #ff7b6b;
+    --credit: #5ed68b;
+    --accent: #7c9bff;
+  }
+}
+
+body {
+  margin: 0;
+  background: color-mix(in srgb, var(--surface) 92%, #000);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, sans-serif;
   line-height: 1.5;
 }
 
-.health-ok {
-  color: #1a7f37;
-  font-weight: 600;
+.app {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
 }
 
-.health-error {
-  color: #b42318;
+h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.subtitle {
+  margin: 0.25rem 0 1.5rem;
+  color: var(--ink-muted);
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.panel-error {
+  border-color: var(--debit);
+}
+
+label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--ink-muted);
+  margin-bottom: 0.35rem;
+}
+
+.upload-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.925rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+th {
+  font-size: 0.775rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
+
+.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.amount-debit {
+  color: var(--debit);
+}
+
+.amount-credit {
+  color: var(--credit);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
   font-weight: 600;
+  border: 1px solid currentColor;
+}
+
+.badge-completed {
+  color: var(--credit);
+}
+
+.badge-failed {
+  color: var(--debit);
+}
+
+.badge-processing {
+  color: var(--ink-muted);
+}
+
+.message {
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0;
+}
+
+.message-error {
+  color: var(--debit);
 }

@@ -36,6 +36,40 @@ docker compose logs -f backend     # tail the API logs
 docker compose down                # stop everything (data survives in the pgdata volume)
 ```
 
+## Try it
+
+A sample statement is included:
+
+```bash
+curl -X POST http://localhost:5173/api/v1/statements \
+  -F "file=@sample-data/july-2026-statement.csv"
+```
+
+Or open http://localhost:5173 and upload it through the UI.
+
+## API (v1)
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/v1/statements` | Upload a statement CSV; runs the ingestion graph. 201 with the outcome, 409 if already uploaded |
+| `GET /api/v1/statements` | Recent statements with their status |
+| `GET /api/v1/transactions` | Transactions, newest first, keyset-paginated via `page_size` + `page_token` |
+| `GET /api/v1/health` | Liveness |
+
+Errors are `application/problem+json` (RFC 9457) with a stable `code` field.
+Interactive docs at http://localhost:8000/docs.
+
+### Supported statement CSVs
+
+Column names are matched case-insensitively against common aliases, in either layout:
+
+- **Signed amount:** `Date`, `Description`, `Amount` (negative = money out)
+- **Debit/credit pair:** `Transaction Date`, `Narration`, `Withdrawal Amount`, `Deposit Amount`
+
+Dates are read **day-first** (`03/04/2026` is 3 April), matching Indian bank exports.
+Unreadable rows (opening balances, footers) are skipped; a file where nothing is
+readable is stored as `FAILED` with the reason.
+
 ## LangGraph Studio (visual graph debugger)
 
 Runs on the host venv, against the same graph code the backend uses:

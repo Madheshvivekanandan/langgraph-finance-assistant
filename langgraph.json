@@ -1,6 +1,7 @@
 {
   "dependencies": ["./backend"],
   "graphs": {
+    "statement": "./backend/app/graphs/statement/graph.py:graph",
     "hello": "./backend/app/graphs/hello/graph.py:graph"
   },
   "env": "./.env"

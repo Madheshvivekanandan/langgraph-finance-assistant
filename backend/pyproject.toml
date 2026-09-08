@@ -9,6 +9,7 @@ description = "My Finance backend - FastAPI + LangGraph"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
+    "python-multipart>=0.0.9",
     "uvicorn[standard]>=0.30",
     "pydantic-settings>=2.4",
     "sqlalchemy>=2.0.35",
@@ -53,3 +54,7 @@ follow_untyped_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Force log records to actually be built during tests. Without this the root
+# logger stays at WARNING, logger.info() short-circuits, and a bad `extra` key
+# (e.g. a reserved LogRecord attribute) only ever blows up in production.
+log_level = "INFO"

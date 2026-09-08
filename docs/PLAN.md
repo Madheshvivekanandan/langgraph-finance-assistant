@@ -53,10 +53,10 @@ My_Finance/
 
 Each phase ends with something runnable and one LangGraph concept understood.
 
-### Phase 0 — Skeleton + first graph visible in Studio  *(learn: StateGraph basics, Studio)*
+### Phase 0 — Skeleton + first graph visible in Studio  ✅ **done**  *(learn: StateGraph basics, Studio)*
 Scaffold backend/frontend, docker-compose Postgres, Alembic baseline. Build a trivial 2-node hello graph, wire `langgraph.json`, run `langgraph dev`, see it and step through it in Studio. **Done when:** graph renders and runs in Studio; FastAPI `/health` and React hello page work.
 
-### Phase 1 — CSV statement upload → transactions in DB  *(learn: state schemas, nodes, conditional edges, error handling)*
+### Phase 1 — CSV statement upload → transactions in DB  ✅ **done**  *(learn: state schemas, nodes, conditional edges, error handling)*
 Upload endpoint accepts a bank CSV. Statement pipeline v1: `parse_csv → normalize → store` with a conditional edge to an error path for malformed files, `retry_policy` on flaky nodes. Plain transactions table view in React. **Done when:** uploading a real statement shows its transactions in the UI, and the run is inspectable step-by-step in Studio.
 
 ### Phase 2 — Categorization  *(learn: LLM nodes, structured output)*
