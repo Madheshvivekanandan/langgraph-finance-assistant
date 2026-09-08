@@ -1,0 +1,17 @@
+.app {
+  max-width: 40rem;
+  margin: 4rem auto;
+  padding: 0 1rem;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+.health-ok {
+  color: #1a7f37;
+  font-weight: 600;
+}
+
+.health-error {
+  color: #b42318;
+  font-weight: 600;
+}

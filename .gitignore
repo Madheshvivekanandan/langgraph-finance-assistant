@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Env / secrets
+.env
+
+# Node
+node_modules/
+frontend/dist/
+
+# LangGraph
+.langgraph_api/
+
+# OS / editor
+.DS_Store

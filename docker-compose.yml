@@ -1,0 +1,66 @@
+# Dev stack: `docker compose up` brings up postgres, runs migrations, then backend + frontend.
+# Credentials interpolate from .env at the repo root — nothing sensitive is committed here.
+services:
+  postgres:
+    image: postgres:17
+    container_name: my_finance_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-myfinance}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-myfinance}
+      POSTGRES_DB: ${POSTGRES_DB:-myfinance}
+    ports:
+      # 5433 on the host: 5432 is taken by the o2c project's postgres.
+      # Host access (alembic/langgraph dev from the venv) uses 5433; containers use postgres:5432.
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-myfinance}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    # One-shot: applies Alembic migrations, then exits. Kept out of the backend's
+    # startup path so N app replicas can never race the same migration.
+    build: ./backend
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-myfinance}:${POSTGRES_PASSWORD:-myfinance}@postgres:5432/${POSTGRES_DB:-myfinance}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build: ./backend
+    container_name: my_finance_backend
+    # Dev override: --reload watches the bind-mounted source
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    env_file: .env
+    environment:
+      # Overrides the host-oriented DATABASE_URL from .env for in-network access
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-myfinance}:${POSTGRES_PASSWORD:-myfinance}@postgres:5432/${POSTGRES_DB:-myfinance}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  frontend:
+    build: ./frontend
+    container_name: my_finance_frontend
+    environment:
+      VITE_PROXY_TARGET: http://backend:8000
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ./frontend:/app
+      # Keep the image's node_modules; don't let the host bind mount shadow it
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

@@ -1,0 +1,7 @@
+{
+  "dependencies": ["./backend"],
+  "graphs": {
+    "hello": "./backend/app/graphs/hello/graph.py:graph"
+  },
+  "env": "./.env"
+}
