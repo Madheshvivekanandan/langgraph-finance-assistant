@@ -59,22 +59,24 @@ def build_statement_graph(
         input_schema=StatementGraphInput,  # type: ignore[arg-type]
     )
 
-    # Every node that runs after the statement row exists gets this handler, so
-    # an exception nobody anticipated is still written onto the statement rather
-    # than escaping invoke() and leaving it stuck at PROCESSING.
-    on_unexpected_failure = RecordUnexpectedFailureNode(session_factory)
-
     builder.add_node("create_statement", CreateStatementNode(session_factory))
-    builder.add_node("parse_csv", parse_csv, error_handler=on_unexpected_failure)
-    builder.add_node("normalize_rows", normalize_rows, error_handler=on_unexpected_failure)
+    # parse_csv and normalize_rows convert their own faults into `error` state,
+    # so the conditional edges below carry them to record_failure and the whole
+    # failure path stays drawn in the graph.
+    builder.add_node("parse_csv", parse_csv)
+    builder.add_node("normalize_rows", normalize_rows)
     builder.add_node(
         "store_transactions",
         StoreTransactionsNode(session_factory),
         # Only a genuinely transient fault is worth repeating. An IntegrityError
         # would fail identically every time, so it is deliberately not retried.
         retry_policy=RetryPolicy(max_attempts=3, retry_on=OperationalError),
-        # Runs only once those retries are exhausted.
-        error_handler=on_unexpected_failure,
+        # The one node that cannot report through state. A retry policy only
+        # fires on an exception that escapes the node, so this one must raise -
+        # and a raised failure has no state for a router to read. The handler is
+        # the runtime's answer; it appears in the diagram as a detached
+        # __error_handler__ node because it is reached by an exception, not an edge.
+        error_handler=RecordUnexpectedFailureNode(session_factory),
     )
     builder.add_node("apply_category_rules", apply_category_rules)
     builder.add_node("categorize_with_llm", CategorizeWithLlmNode(category_suggester))

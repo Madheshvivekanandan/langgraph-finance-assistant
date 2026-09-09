@@ -3,8 +3,11 @@
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from app.domain.parsed_transaction import ParsedTransaction
 from app.domain.transaction_direction import TransactionDirection
+from app.graphs.statement.nodes import normalize_rows as normalize_module
 from app.graphs.statement.nodes.normalize_rows import normalize_rows
 
 
@@ -82,3 +85,21 @@ def test_normalize_rows_records_error_when_every_row_is_unusable() -> None:
 
     assert "transactions" not in result
     assert "all 2 data rows were skipped" in str(result["error"])
+
+
+def test_an_unexpected_fault_is_reported_as_state_not_raised(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A malformed cell must not crash the run; the failure edge carries it."""
+
+    def explode(*_: object) -> None:
+        raise RuntimeError("something nobody predicted")
+
+    monkeypatch.setattr(normalize_module, "_to_transaction", explode)
+
+    result = normalize_rows(
+        {"statement_id": 1, "rows": [{"Date": "01/07/2026", "Description": "X", "Amount": "-1.00"}]}
+    )
+
+    assert "transactions" not in result
+    assert "could not be read" in str(result["error"])
