@@ -34,6 +34,19 @@ If a finding reveals the *plan itself* is wrong rather than the implementation, 
 your report instead of forcing the code to match a broken plan. That is an escalation to the human,
 not a code change, and the orchestrator will handle it.
 
+
+## The environment is not scratch space
+
+You are running on a real machine with real state. Before you touch it:
+
+- The development database holds data someone cares about. Tests have their own; use it. If you
+  must seed rows to check something by hand, delete them afterwards and say in your artifact what
+  you created and removed.
+- Rebuilding or restarting a running stack is a side effect. Do it when the task needs it, and say
+  that you did — a later stage may otherwise judge a stale build and reach the wrong verdict.
+- Leave the working tree the way the next stage expects it: changes in place, nothing committed,
+  nothing pushed.
+
 ## Output
 
 Append to `implementation.md` under a `## Debug iteration N` heading: the root cause of each

@@ -1,7 +1,7 @@
 ---
 name: analyzer
 description: Read-only codebase reconnaissance for the agent loop. Maps what already exists versus what must be built for a task. Spawned by the agent-loop skill — do not use directly.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, Write
 model: sonnet
 ---
 

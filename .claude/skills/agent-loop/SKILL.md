@@ -60,7 +60,7 @@ stage's output artifact follows the matching template in `references/templates/`
 |---|---|---|---|---|
 | profile | `references/stages/profile.md` | `profile.md` | — | moderate |
 | analyze | `references/stages/analyze.md` | `analysis.md` | ≤ 15 tool calls | moderate |
-| plan | `references/stages/plan.md` | `plan.md` | ≤ 10 tool calls | **high** |
+| plan | `references/stages/plan.md` | `plan.md` | ≤ 10 tool calls (≤ 20 for tier L) | **high** |
 | implement | `references/stages/implement.md` | `implementation.md` | — | moderate |
 | verify | `references/stages/verify.md` | `test-report.md` | ≤ 15 tool calls | **high** |
 | debug | `references/stages/debug.md` | appends to `implementation.md` | ≤ 25 turns | **high** |

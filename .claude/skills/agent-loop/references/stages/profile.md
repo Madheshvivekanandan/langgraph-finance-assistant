@@ -21,6 +21,13 @@ downstream is generic; this file is where a particular codebase's reality lives.
 4. Identify one exemplar file per major pattern the implementer might need to imitate.
 5. Note conventions and gotchas an agent could not infer from reading the code.
 
+## Project standards
+
+Record the path of every project instruction file you find — `CLAUDE.md`, `AGENTS.md`,
+`.cursor/rules`, a `docs/` conventions page, any skills the project ships — and one line on what
+each governs. Later stages read this to know which rules apply; the implement stage loads them
+before writing code, and the verify stage checks the diff against them.
+
 ## Recording failures
 
 If a command does not exist or does not work, write that down rather than inventing a substitute:

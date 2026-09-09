@@ -22,6 +22,21 @@ Judge the work fresh from the requirements and the diff.
    real output. A verdict without executed commands is not a verdict.
 4. Judge: does the diff satisfy the stated requirements, and do the checks pass?
 
+## Project standards are part of the contract
+
+The plan is not the only thing the work must satisfy. Before judging the diff, look for a project
+instruction file — `CLAUDE.md`, `AGENTS.md`, or whatever `profile.md` recorded — and read the
+conventions it states. Then check the diff against them explicitly, as its own probe.
+
+This matters because the plan is written for one task while the standards outlive every task, so a
+plan will routinely be silent on a rule the project cares about. Judging only against the plan lets
+a violation through with every stage reporting success. Layering and dependency-direction rules are
+the usual casualty: linters and type checkers cannot see them, so if this stage does not look,
+nothing does.
+
+A violation of a documented project standard is a **finding**, even when the plan never mentioned
+it.
+
 ## What counts as a finding
 
 Report **only gaps that affect correctness or the stated requirements**. Style preferences,
@@ -33,6 +48,11 @@ If you find nothing wrong and the checks pass, the correct answer is PASS with e
 so plainly.
 
 ## Output
+
+You may have been spawned without write tools — that restriction is what makes your verdict
+trustworthy, and it also means you may be unable to write your own report. If you cannot write it,
+return the complete report as your final message and the orchestrator will persist it verbatim.
+Never ask for write access to work around this.
 
 1. **Verdict** — exactly `PASS` or `FAIL`. Never free-text approval.
 2. **Findings** — for FAIL: each finding with file, what is wrong, and why it violates the plan or
