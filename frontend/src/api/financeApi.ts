@@ -1,10 +1,11 @@
 import type { CategoryList } from '../interfaces/category'
+import type { ChatStatus } from '../interfaces/chat'
 import type { ProblemDetail } from '../interfaces/problem'
 import type { Statement, StatementList } from '../interfaces/statement'
 import type { CategorySummaryList, MonthSummaryList } from '../interfaces/summary'
 import type { Transaction, TransactionPage } from '../interfaces/transaction'
 
-const API_BASE = '/api/v1'
+export const API_BASE = '/api/v1'
 const REQUEST_TIMEOUT_MS = 30_000
 
 /** An API error carrying the server's stable machine-readable code. */
@@ -20,7 +21,7 @@ export class ApiError extends Error {
   }
 }
 
-async function toApiError(response: Response): Promise<ApiError> {
+export async function toApiError(response: Response): Promise<ApiError> {
   try {
     const problem = (await response.json()) as ProblemDetail
     if (problem.code) return new ApiError(problem)
@@ -96,4 +97,8 @@ export function setTransactionCategory(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ category }),
   })
+}
+
+export function fetchChatStatus(): Promise<ChatStatus> {
+  return request<ChatStatus>('/chat/status')
 }

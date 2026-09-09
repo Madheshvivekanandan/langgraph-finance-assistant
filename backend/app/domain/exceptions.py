@@ -49,3 +49,7 @@ class InvalidMonthError(DomainError):
 
 class InvalidPageTokenError(DomainError):
     """A pagination cursor was malformed or expired."""
+
+
+class ChatUnavailableError(DomainError):
+    """The chat agent has no model configured (no OPENAI_API_KEY)."""

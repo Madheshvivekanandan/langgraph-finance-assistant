@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 
 from app.domain.exceptions import (
     AppError,
+    ChatUnavailableError,
     DuplicateStatementError,
     InvalidMonthError,
     InvalidPageTokenError,
@@ -98,6 +99,15 @@ def register_error_handlers(app: FastAPI) -> None:
             detail=str(exc),
         )
 
+    @app.exception_handler(ChatUnavailableError)
+    async def _chat_unavailable(_: Request, exc: ChatUnavailableError) -> Response:
+        return _problem(
+            status=503,
+            code="CHAT_UNAVAILABLE",
+            title="Chat is unavailable",
+            detail=str(exc),
+        )
+
     @app.exception_handler(AppError)
     async def _unexpected(_: Request, exc: AppError) -> Response:
         # Log the cause; tell the client nothing about our internals.
@@ -117,6 +127,7 @@ def register_error_handlers(app: FastAPI) -> None:
         _transaction_not_found,
         _bad_month,
         _bad_token,
+        _chat_unavailable,
         _unexpected,
     )
     logger.debug("registered %d domain error handlers", len(_handlers))

@@ -75,8 +75,21 @@ def _migrate_test_database() -> None:
     command.upgrade(config, "head")
 
 
+def _setup_test_checkpointer() -> None:
+    """Create the LangGraph checkpointer's tables on the test database.
+
+    Same code path as the compose `migrate` one-shot (`app.db.checkpointer_setup`),
+    run against `myfinance_test` right after Alembic - so there is exactly one
+    way these tables ever get created, in dev and in tests alike.
+    """
+    from app.db.checkpointer_setup import setup_checkpointer
+
+    setup_checkpointer(TEST_DATABASE_URL)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _prepared_test_database() -> None:
     """Guarantee a migrated test database exists before the first test runs."""
     _create_test_database_if_missing()
     _migrate_test_database()
+    _setup_test_checkpointer()

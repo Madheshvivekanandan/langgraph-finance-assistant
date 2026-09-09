@@ -1,4 +1,5 @@
 import './App.css'
+import { ChatPanel } from './components/ChatPanel'
 import { Dashboard } from './components/Dashboard'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { StatementList } from './components/StatementList'
@@ -68,6 +69,10 @@ function App() {
             <StatementList statements={statements} />
           </>
         )}
+      </ErrorBoundary>
+
+      <ErrorBoundary>
+        <ChatPanel />
       </ErrorBoundary>
     </main>
   )
