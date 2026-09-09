@@ -9,12 +9,14 @@ class StatementState(TypedDict, total=False):
     """Everything the statement pipeline reads or writes.
 
     total=False because each node fills in only its own keys; the graph starts
-    with just the two keys declared in StatementGraphInput.
+    with just the keys declared in StatementGraphInput.
     """
 
     # Supplied by the caller
-    statement_id: int
     raw_csv: str
+    filename: str
+    # Produced by create_statement
+    statement_id: int
     # Produced by parse_csv
     rows: list[dict[str, str]]
     # Produced by normalize_rows

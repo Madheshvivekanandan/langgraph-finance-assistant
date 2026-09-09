@@ -79,6 +79,16 @@ source .venv/bin/activate
 langgraph dev                      # from the repo root; needs a free LangSmith login
 ```
 
+Pick the **statement** graph and give it just a CSV — it creates its own statement
+record, so nothing needs to exist beforehand:
+
+```json
+{ "raw_csv": "Date,Description,Amount\n01/07/2026,SWIGGY,-450.00\n" }
+```
+
+Re-running identical CSV text raises `DuplicateStatementError`: the unique file
+hash is what stops a statement being counted twice. Change a value to run again.
+
 ## Run without Docker (host venv, optional)
 
 ```bash
@@ -95,11 +105,16 @@ cd backend
 ruff format . && ruff check . && mypy app && pytest -q
 ```
 
+Tests run against a separate **`myfinance_test`** database, created and migrated
+automatically on first run. They never touch your development data — the
+integration fixtures refuse to truncate any database whose name does not end in
+`_test`.
+
 ## Layout
 
 ```
 backend/app/          FastAPI app (api → services → repositories layering)
-backend/app/graphs/   LangGraph graphs (hello = Phase 0 proof; statement pipeline comes in Phase 1)
+backend/app/graphs/   LangGraph graphs (statement = the ingestion pipeline; hello = Phase 0 proof)
 backend/app/db/       engine/session + Alembic migrations
 frontend/             Vite + React + TS
 langgraph.json        points LangGraph Studio at the graphs

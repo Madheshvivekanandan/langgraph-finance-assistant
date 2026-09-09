@@ -1,14 +1,11 @@
 """Use case: take an uploaded statement file and turn it into stored transactions."""
 
-import hashlib
 import logging
 
 from langgraph.graph.state import CompiledStateGraph
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.domain.exceptions import DuplicateStatementError, StatementNotFoundError
-from app.domain.statement_status import StatementStatus
+from app.domain.exceptions import StatementNotFoundError
 from app.graphs.statement.state import StatementState
 from app.models.statement import Statement
 from app.repositories.statement_repository import StatementRepository
@@ -17,7 +14,12 @@ logger = logging.getLogger(__name__)
 
 
 class StatementIngestionService:
-    """Creates the statement record, runs the ingestion graph, returns the outcome."""
+    """Hands an uploaded file to the ingestion graph and reports the outcome.
+
+    Deliberately thin: the graph owns the whole statement lifecycle, from
+    creating the record to setting its final status. This service only adapts
+    between HTTP bytes and the graph's text input.
+    """
 
     def __init__(
         self,
@@ -38,46 +40,17 @@ class StatementIngestionService:
             The statement record, with its final status set by the graph.
 
         Raises:
-            DuplicateStatementError: If these exact bytes were already ingested.
+            DuplicateStatementError: If this exact content was already ingested.
             StatementNotFoundError: If the record disappeared mid-run.
         """
-        file_hash = hashlib.sha256(content).hexdigest()
-        raw_csv = self._decode(content)
-        statement_id = self._create_statement(filename=filename, file_hash=file_hash)
-
-        # The graph owns the outcome: it writes the transactions and sets the
-        # statement's final status, so this service only has to read it back.
-        self._graph.invoke({"statement_id": statement_id, "raw_csv": raw_csv})
+        result = self._graph.invoke({"raw_csv": self._decode(content), "filename": filename})
+        statement_id = result["statement_id"]
 
         with self._session_factory() as session:
             statement = StatementRepository(session).find_by_id(statement_id)
             if statement is None:
                 raise StatementNotFoundError(statement_id)
             return statement
-
-    def _create_statement(self, *, filename: str, file_hash: str) -> int:
-        """Insert the statement row in PROCESSING and return its id.
-
-        Raises:
-            DuplicateStatementError: If the unique file_hash constraint rejects it.
-        """
-        try:
-            with self._session_factory() as session, session.begin():
-                statement = StatementRepository(session).add(
-                    Statement(
-                        filename=filename,
-                        file_hash=file_hash,
-                        status=StatementStatus.PROCESSING.value,
-                    )
-                )
-                return statement.id
-        except IntegrityError as exc:
-            # The unique constraint is the real guard: a prior existence check
-            # would still lose a race between two simultaneous uploads.
-            # Key must not be "filename": that is a reserved LogRecord attribute
-            # and logging raises KeyError rather than overwrite it.
-            logger.info("duplicate_statement_rejected", extra={"statement_filename": filename})
-            raise DuplicateStatementError(filename) from exc
 
     @staticmethod
     def _decode(content: bytes) -> str:

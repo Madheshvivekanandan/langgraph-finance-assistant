@@ -3,9 +3,11 @@
 from datetime import date
 from decimal import Decimal
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.domain.exceptions import DuplicateStatementError
 from app.domain.statement_status import StatementStatus
 from app.graphs.statement.graph import build_statement_graph
 from app.models.statement import Statement
@@ -19,30 +21,19 @@ _GOOD_CSV = (
 )
 
 
-def _create_statement(factory: sessionmaker[Session], *, file_hash: str) -> int:
-    with factory() as session, session.begin():
-        statement = Statement(
-            filename="july.csv",
-            file_hash=file_hash,
-            status=StatementStatus.PROCESSING.value,
-        )
-        session.add(statement)
-        session.flush()
-        return statement.id
-
-
-def test_graph_stores_transactions_and_completes_the_statement(
+def test_graph_creates_the_statement_it_writes_against(
     session_factory: sessionmaker[Session],
 ) -> None:
-    statement_id = _create_statement(session_factory, file_hash="hash-good")
+    """The graph runs from a CSV alone - no caller-supplied statement row."""
     graph = build_statement_graph(session_factory)
 
-    result = graph.invoke({"statement_id": statement_id, "raw_csv": _GOOD_CSV})
+    result = graph.invoke({"raw_csv": _GOOD_CSV, "filename": "july.csv"})
 
     assert result["stored_count"] == 3
     with session_factory() as session:
-        statement = session.get(Statement, statement_id)
+        statement = session.get(Statement, result["statement_id"])
         assert statement is not None
+        assert statement.filename == "july.csv"
         assert statement.status == StatementStatus.COMPLETED.value
         assert statement.transaction_count == 3
         assert statement.period_start == date(2026, 7, 1)
@@ -59,16 +50,41 @@ def test_graph_stores_transactions_and_completes_the_statement(
         assert [row.direction for row in rows] == ["DEBIT", "CREDIT", "DEBIT"]
 
 
+def test_graph_defaults_the_filename_when_none_is_given(
+    session_factory: sessionmaker[Session],
+) -> None:
+    """A Studio run supplies only raw_csv, so filename must be optional."""
+    graph = build_statement_graph(session_factory)
+
+    result = graph.invoke({"raw_csv": _GOOD_CSV})
+
+    with session_factory() as session:
+        statement = session.get(Statement, result["statement_id"])
+        assert statement is not None
+        assert statement.filename == "statement.csv"
+
+
+def test_graph_rejects_the_same_content_twice(
+    session_factory: sessionmaker[Session],
+) -> None:
+    graph = build_statement_graph(session_factory)
+    graph.invoke({"raw_csv": _GOOD_CSV, "filename": "july.csv"})
+
+    # No statement row exists for a duplicate, so there is nowhere to record the
+    # failure: it raises instead of travelling as state.
+    with pytest.raises(DuplicateStatementError):
+        graph.invoke({"raw_csv": _GOOD_CSV, "filename": "july-again.csv"})
+
+
 def test_graph_routes_unreadable_header_to_the_failure_path(
     session_factory: sessionmaker[Session],
 ) -> None:
-    statement_id = _create_statement(session_factory, file_hash="hash-bad-header")
     graph = build_statement_graph(session_factory)
 
-    graph.invoke({"statement_id": statement_id, "raw_csv": "Foo,Bar\n1,2\n"})
+    result = graph.invoke({"raw_csv": "Foo,Bar\n1,2\n", "filename": "junk.csv"})
 
     with session_factory() as session:
-        statement = session.get(Statement, statement_id)
+        statement = session.get(Statement, result["statement_id"])
         assert statement is not None
         assert statement.status == StatementStatus.FAILED.value
         assert "date column" in (statement.error_message or "")
@@ -79,39 +95,36 @@ def test_graph_routes_unreadable_header_to_the_failure_path(
 def test_graph_routes_all_rows_unreadable_to_the_failure_path(
     session_factory: sessionmaker[Session],
 ) -> None:
-    statement_id = _create_statement(session_factory, file_hash="hash-bad-rows")
     graph = build_statement_graph(session_factory)
 
-    graph.invoke(
-        {
-            "statement_id": statement_id,
-            "raw_csv": "Date,Description,Amount\nnot-a-date,X,100\n",
-        }
+    result = graph.invoke(
+        {"raw_csv": "Date,Description,Amount\nnot-a-date,X,100\n", "filename": "bad.csv"}
     )
 
     with session_factory() as session:
-        statement = session.get(Statement, statement_id)
+        statement = session.get(Statement, result["statement_id"])
         assert statement is not None
         assert statement.status == StatementStatus.FAILED.value
         assert "all 1 data rows were skipped" in (statement.error_message or "")
 
 
-def test_graph_input_schema_rejects_injected_transactions(
+def test_graph_input_schema_rejects_injected_state(
     session_factory: sessionmaker[Session],
 ) -> None:
-    """A caller must not be able to bypass the parser by supplying transactions."""
-    statement_id = _create_statement(session_factory, file_hash="hash-injection")
+    """A caller must not be able to bypass the parser or hijack a statement row."""
     graph = build_statement_graph(session_factory)
 
-    graph.invoke(
+    result = graph.invoke(
         {
-            "statement_id": statement_id,
             "raw_csv": _GOOD_CSV,
-            # Not part of StatementGraphInput, so the graph must ignore it.
+            "filename": "july.csv",
+            # Neither key is part of StatementGraphInput, so both must be ignored.
             "transactions": [{"description": "FAKE", "amount": "999999.00"}],
+            "statement_id": 4242,
         }
     )
 
+    assert result["statement_id"] != 4242
     with session_factory() as session:
         descriptions = set(session.execute(select(Transaction.description)).scalars())
         assert "FAKE" not in descriptions

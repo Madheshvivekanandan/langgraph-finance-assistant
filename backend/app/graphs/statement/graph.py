@@ -1,8 +1,8 @@
 """The statement ingestion graph.
 
-    START -> parse_csv -> normalize_rows -> store_transactions -> END
-                  |              |
-                  +--------------+--> record_failure -> END
+    START -> create_statement -> parse_csv -> normalize_rows -> store_transactions -> END
+                                     |              |
+                                     +--------------+--> record_failure -> END
 
 Both conditional edges route to `record_failure` whenever a node has put an
 `error` in state. Expected failures (bad headers, unreadable rows) travel as
@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.db.session import get_session_factory
 from app.graphs.statement.graph_input import StatementGraphInput
+from app.graphs.statement.nodes.create_statement_node import CreateStatementNode
 from app.graphs.statement.nodes.normalize_rows import normalize_rows
 from app.graphs.statement.nodes.parse_csv import parse_csv
 from app.graphs.statement.nodes.record_failure_node import RecordFailureNode
@@ -41,6 +42,7 @@ def build_statement_graph(
         input_schema=StatementGraphInput,  # type: ignore[arg-type]
     )
 
+    builder.add_node("create_statement", CreateStatementNode(session_factory))
     builder.add_node("parse_csv", parse_csv)
     builder.add_node("normalize_rows", normalize_rows)
     builder.add_node(
@@ -52,7 +54,8 @@ def build_statement_graph(
     )
     builder.add_node("record_failure", RecordFailureNode(session_factory))
 
-    builder.add_edge(START, "parse_csv")
+    builder.add_edge(START, "create_statement")
+    builder.add_edge("create_statement", "parse_csv")
     builder.add_conditional_edges(
         "parse_csv",
         route_after_parse,
