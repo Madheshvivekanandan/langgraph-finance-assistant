@@ -29,11 +29,7 @@ export function StatementList({ statements }: Props) {
           <tr>
             <th scope="col">File</th>
             <th scope="col">Status</th>
-            {/* Must carry .numeric like its cells, or the header sits left of
-                the numbers it labels. */}
-            <th scope="col" className="numeric">
-              Transactions
-            </th>
+            <th scope="col">Transactions</th>
             <th scope="col">Period</th>
           </tr>
         </thead>
@@ -49,7 +45,10 @@ export function StatementList({ statements }: Props) {
                   <div className="message message-error">{statement.error_message}</div>
                 )}
               </td>
-              <td className="numeric">{statement.transaction_count}</td>
+              {/* Left-aligned like every other column in this table. Right-aligning
+                  a one- or two-digit count only pushed it away from its own
+                  header and up against the period beside it. */}
+              <td>{statement.transaction_count}</td>
               <td>{periodLabel(statement)}</td>
             </tr>
           ))}
