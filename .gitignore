@@ -21,3 +21,4 @@ frontend/dist/
 
 # OS / editor
 .DS_Store
+.agent-loop/
