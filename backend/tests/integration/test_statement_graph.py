@@ -5,6 +5,7 @@ from decimal import Decimal
 
 import pytest
 from sqlalchemy import select
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.domain.categorization_source import CategorizationSource
@@ -227,3 +228,50 @@ def test_ingestion_succeeds_with_no_suggester_configured(
             ).scalars()
         ]
     assert "UNCATEGORIZED" in categories
+
+
+class _FailingStoreFactory:
+    """Real sessions, except the ones store_transactions asks for.
+
+    Lets the recovery handler open its own session, which is the case that
+    matters: the write failed, but the database is still reachable enough to
+    record that it did.
+    """
+
+    def __init__(self, real_factory: sessionmaker[Session]) -> None:
+        self._real = real_factory
+        self.calls = 0
+
+    def __call__(self, *args: object, **kwargs: object) -> Session:
+        del args, kwargs  # signature must match sessionmaker; the arguments are unused
+        self.calls += 1
+        # 1 = create_statement; 2-4 = the store node's three retry attempts.
+        if 2 <= self.calls <= 4:
+            raise OperationalError("simulated", None, Exception("database went away"))
+        return self._real()
+
+
+def test_a_crash_while_storing_is_recorded_on_the_statement(
+    session_factory: sessionmaker[Session],
+) -> None:
+    """An unexpected failure must not leave a statement stuck at PROCESSING.
+
+    Without the node's error_handler the exception escapes invoke() entirely and
+    the row keeps saying PROCESSING forever, with no transactions and no reason.
+    """
+    failing = _FailingStoreFactory(session_factory)
+    graph = build_statement_graph(failing, None)
+
+    # The graph completes rather than raising.
+    result = graph.invoke({"raw_csv": _GOOD_CSV, "filename": "crash.csv"})
+
+    assert "error" in result
+    # 1 create + 3 store attempts: the retry policy still ran before giving up.
+    assert failing.calls >= 4
+    with session_factory() as session:
+        statement = session.get(Statement, result["statement_id"])
+        assert statement is not None
+        assert statement.status == StatementStatus.FAILED.value
+        assert statement.error_message
+        assert statement.transaction_count == 0
+        assert session.execute(select(Transaction)).first() is None
