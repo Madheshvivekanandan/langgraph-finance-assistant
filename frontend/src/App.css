@@ -221,6 +221,29 @@ th {
   opacity: 0.55;
 }
 
+/* The legend that explains the dashed outline below. Without it the border is
+   a signal nobody can read - it was a hover-only tooltip before. */
+.table-legend {
+  display: flex;
+  /* Top, not centre: the chip should sit with the first line when the sentence
+     wraps to two. */
+  align-items: flex-start;
+  gap: 0.5rem;
+  line-height: 1.45;
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.legend-chip {
+  flex: none;
+  width: 1.6rem;
+  height: 1rem;
+  margin-top: 0.15rem;
+  border-radius: 5px;
+  border: 1px dashed var(--accent);
+}
+
 /* A model guess is provisional until a person confirms or changes it. */
 .category-select.source-llm {
   border-style: dashed;

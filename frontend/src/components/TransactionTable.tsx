@@ -50,9 +50,24 @@ export function TransactionTable({
     )
   }
 
+  // Only worth explaining when at least one row actually carries the marker.
+  const hasModelGuesses = transactions.some((item) => item.categorized_by === 'LLM')
+
   return (
     <div className="panel">
       <h2>Transactions</h2>
+      {hasModelGuesses && (
+        <p className="table-legend">
+          <span className="legend-chip" aria-hidden="true" />
+          {/* One span, so the sentence stays one flex item and flows as prose
+              instead of breaking into a column per child node. */}
+          <span>
+            A dashed outline means the category was <strong>suggested by AI</strong>{' '}
+            and is not yet confirmed. Pick a different one to correct it — your choice
+            is kept.
+          </span>
+        </p>
+      )}
       <div className="table-scroll">
         <table>
           <thead>
