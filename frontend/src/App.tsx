@@ -1,4 +1,5 @@
 import './App.css'
+import { Dashboard } from './components/Dashboard'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { StatementList } from './components/StatementList'
 import { StatementUpload } from './components/StatementUpload'
@@ -8,8 +9,14 @@ import { useFinanceData } from './hooks/useFinanceData'
 function App() {
   const {
     statements,
-    transactions,
     categories,
+    months,
+    categorySummary,
+    transactions,
+    selectedMonth,
+    setSelectedMonth,
+    selectedCategory,
+    setSelectedCategory,
     savingIds,
     updateCategory,
     status,
@@ -24,9 +31,7 @@ function App() {
     <main className="app">
       <header>
         <h1>My Finance</h1>
-        <p className="subtitle">
-          Upload a bank statement and see your transactions.
-        </p>
+        <p className="subtitle">Where your money went, and what you can ask about it.</p>
       </header>
 
       <ErrorBoundary>
@@ -42,7 +47,15 @@ function App() {
 
         {status === 'ready' && (
           <>
-            <StatementList statements={statements} />
+            <Dashboard
+              months={months}
+              categorySummary={categorySummary}
+              categories={categories}
+              selectedMonth={selectedMonth}
+              onMonthChange={setSelectedMonth}
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+            />
             <TransactionTable
               transactions={transactions}
               categories={categories}
@@ -52,6 +65,7 @@ function App() {
               onLoadMore={() => void loadMore()}
               onCategoryChange={(id, category) => void updateCategory(id, category)}
             />
+            <StatementList statements={statements} />
           </>
         )}
       </ErrorBoundary>

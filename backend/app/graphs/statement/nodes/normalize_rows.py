@@ -85,10 +85,16 @@ def normalize_rows(state: StatementState) -> dict[str, object]:
         return {"error": str(exc)}
 
     transactions: list[ParsedTransaction] = []
-    for row in rows:
-        parsed = _to_transaction(row, columns)
-        if parsed is not None:
-            transactions.append(parsed)
+    try:
+        for row in rows:
+            parsed = _to_transaction(row, columns)
+            if parsed is not None:
+                transactions.append(parsed)
+    except Exception as exc:  # noqa: BLE001 - kept as state so the edge carries it
+        # A malformed cell should never crash the run; the failure edge already
+        # exists, so this node reports rather than raises.
+        logger.exception("statement_normalize_crashed")
+        return {"error": f"a row could not be read: {exc}"}
 
     skipped_row_count = len(rows) - len(transactions)
     if not transactions:

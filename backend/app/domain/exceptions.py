@@ -43,5 +43,9 @@ class TransactionNotFoundError(DomainError):
         self.transaction_id = transaction_id
 
 
+class InvalidMonthError(DomainError):
+    """A month filter was not a usable 'YYYY-MM' value."""
+
+
 class InvalidPageTokenError(DomainError):
     """A pagination cursor was malformed or expired."""

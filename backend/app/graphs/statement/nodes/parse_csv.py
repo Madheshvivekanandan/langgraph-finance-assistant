@@ -31,6 +31,14 @@ def parse_csv(state: StatementState) -> dict[str, object]:
     except csv.Error as exc:
         logger.info("statement_csv_malformed", extra={"reason": str(exc)})
         return {"error": f"the file is not valid CSV: {exc}"}
+    except Exception as exc:  # noqa: BLE001 - see below
+        # Returned as state rather than raised, so the graph's own failure edge
+        # carries it to record_failure. Raising would need a node-level error
+        # handler instead, which the runtime dispatches to outside the edge
+        # graph - invisible in the diagram. This node has no retry policy, so
+        # nothing is lost by handling it here.
+        logger.exception("statement_parse_crashed")
+        return {"error": f"the file could not be read: {exc}"}
 
     if not rows:
         return {"error": "the file has a valid header but no data rows"}

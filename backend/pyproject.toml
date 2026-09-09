@@ -27,6 +27,8 @@ dev = [
     "ruff>=0.6",
     "mypy>=1.11",
     "langgraph-cli[inmem]>=0.4",
+    # Drives scripts/screenshot_ui.py - renders the UI and fails on layout defects.
+    "playwright>=1.47",
 ]
 
 [tool.hatch.build.targets.wheel]

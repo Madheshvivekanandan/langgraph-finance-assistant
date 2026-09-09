@@ -62,8 +62,8 @@ Upload endpoint accepts a bank CSV. Statement pipeline v1: `parse_csv → normal
 ### Phase 2 — Categorization  ✅ **done**  *(learn: LLM nodes, structured output)*
 Add `categorize` node: rules first (regex/merchant map — free and instant), LLM fallback with structured output for the rest, batched to keep cost low. Store category + confidence + who categorized. Manual category override in the UI. (Rules live in code, not a table; having a correction auto-write a new rule needs fuzzy merchant extraction, deferred to Phase 5.) **Done when:** an uploaded statement comes back fully categorized and corrections stick.
 
-### Phase 3 — Dashboard  *(learn: nothing new in LangGraph — pure product payoff)*
-Monthly summary (income/expense/net), category breakdown donut, month-over-month trend line, filterable transaction table. Follow the dataviz skill for the charts. **Done when:** you can see where a month's money went at a glance.
+### Phase 3 — Dashboard  ✅ **done**  *(learn: nothing new in LangGraph — pure product payoff)*
+Monthly summary (income/expense/net) as KPI tiles, category breakdown as a **bar chart** (not a donut — the dataviz skill is clear that bar length beats arc angle for magnitude comparison), month-over-month trend line, filterable transaction table. **Done when:** you can see where a month's money went at a glance.
 
 ### Phase 4 — Chat agent  *(learn: create_agent, tools, checkpointer memory, streaming)*
 `create_agent` with 2–3 safe tools (`get_monthly_summary`, `search_transactions`, `spending_by_category`) — tools call repositories, never raw SQL from the LLM. `AsyncPostgresSaver` + `thread_id` for conversation memory; SSE streaming to a React chat panel. **Done when:** "how much did I spend on dining in July?" gets a correct, streamed answer with follow-up memory.

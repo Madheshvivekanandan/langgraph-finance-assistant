@@ -53,9 +53,11 @@ Or open http://localhost:5173 and upload it through the UI.
 |---|---|
 | `POST /api/v1/statements` | Upload a statement CSV; runs the ingestion graph. 201 with the outcome, 409 if already uploaded |
 | `GET /api/v1/statements` | Recent statements with their status |
-| `GET /api/v1/transactions` | Transactions, newest first, keyset-paginated via `page_size` + `page_token` |
+| `GET /api/v1/transactions` | Transactions, newest first, keyset-paginated via `page_size` + `page_token`; filter with `month` (YYYY-MM) and `category` |
 | `PUT /api/v1/transactions/{id}/category` | Override a category; records the source as USER |
 | `GET /api/v1/categories` | The category vocabulary the UI offers |
+| `GET /api/v1/summary/months` | Income, expense, and net per month |
+| `GET /api/v1/summary/categories` | Spending by category, optionally for one month |
 | `GET /api/v1/health` | Liveness |
 
 Errors are `application/problem+json` (RFC 9457) with a stable `code` field.
@@ -71,6 +73,20 @@ Column names are matched case-insensitively against common aliases, in either la
 Dates are read **day-first** (`03/04/2026` is 3 April), matching Indian bank exports.
 Unreadable rows (opening balances, footers) are skipped; a file where nothing is
 readable is stored as `FAILED` with the reason.
+
+## Dashboard
+
+The home page opens on a dashboard: income / expense / net tiles, a month-by-month
+trend, and a bar chart of where the money went. Pick a period from the filter row,
+or click a category bar to filter the transaction table below it.
+
+Two conventions worth knowing, both deliberate:
+
+- **`expense` counts every debit**, transfers and investments included — money that
+  left the account left the account. The category breakdown is where that
+  distinction becomes visible.
+- **The category breakdown is debits only.** A picture of where money went should
+  not have salary mixed into it.
 
 ## Categorization
 
@@ -128,6 +144,19 @@ Tests run against a separate **`myfinance_test`** database, created and migrated
 automatically on first run. They never touch your development data — the
 integration fixtures refuse to truncate any database whose name does not end in
 `_test`.
+
+## Checking the UI
+
+A palette validator checks colour, not geometry, so the layout gets rendered and
+inspected instead of eyeballed:
+
+```bash
+playwright install chromium     # once
+python scripts/screenshot_ui.py # app must be running
+```
+
+It screenshots mobile, tablet, and desktop (light and dark) into `.screenshots/`,
+and exits non-zero if the page scrolls horizontally or any label is clipped.
 
 ## Layout
 

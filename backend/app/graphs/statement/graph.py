@@ -28,6 +28,9 @@ from app.graphs.statement.nodes.create_statement_node import CreateStatementNode
 from app.graphs.statement.nodes.normalize_rows import normalize_rows
 from app.graphs.statement.nodes.parse_csv import parse_csv
 from app.graphs.statement.nodes.record_failure_node import RecordFailureNode
+from app.graphs.statement.nodes.record_unexpected_failure_node import (
+    RecordUnexpectedFailureNode,
+)
 from app.graphs.statement.nodes.store_transactions_node import StoreTransactionsNode
 from app.graphs.statement.routing import (
     route_after_normalize,
@@ -57,6 +60,9 @@ def build_statement_graph(
     )
 
     builder.add_node("create_statement", CreateStatementNode(session_factory))
+    # parse_csv and normalize_rows convert their own faults into `error` state,
+    # so the conditional edges below carry them to record_failure and the whole
+    # failure path stays drawn in the graph.
     builder.add_node("parse_csv", parse_csv)
     builder.add_node("normalize_rows", normalize_rows)
     builder.add_node(
@@ -65,6 +71,12 @@ def build_statement_graph(
         # Only a genuinely transient fault is worth repeating. An IntegrityError
         # would fail identically every time, so it is deliberately not retried.
         retry_policy=RetryPolicy(max_attempts=3, retry_on=OperationalError),
+        # The one node that cannot report through state. A retry policy only
+        # fires on an exception that escapes the node, so this one must raise -
+        # and a raised failure has no state for a router to read. The handler is
+        # the runtime's answer; it appears in the diagram as a detached
+        # __error_handler__ node because it is reached by an exception, not an edge.
+        error_handler=RecordUnexpectedFailureNode(session_factory),
     )
     builder.add_node("apply_category_rules", apply_category_rules)
     builder.add_node("categorize_with_llm", CategorizeWithLlmNode(category_suggester))

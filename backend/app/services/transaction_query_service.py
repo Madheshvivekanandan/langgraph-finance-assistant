@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.domain.month import Month
+from app.domain.transaction_category import TransactionCategory
 from app.models.transaction import Transaction
 from app.repositories.transaction_repository import TransactionRepository
 from app.services.transaction_cursor import TransactionCursor
@@ -23,12 +25,25 @@ class TransactionQueryService:
     def __init__(self, session_factory: sessionmaker[Session]) -> None:
         self._session_factory = session_factory
 
-    def list_page(self, *, page_size: int, page_token: str | None) -> TransactionPage:
+    def list_page(
+        self,
+        *,
+        page_size: int,
+        page_token: str | None,
+        month: Month | None = None,
+        category: TransactionCategory | None = None,
+    ) -> TransactionPage:
         """Return one page of transactions, newest first.
+
+        The cursor encodes only a position, never the filters. A caller paging
+        through a filtered list must send the same filters with each page, or the
+        next page is a page of something else.
 
         Args:
             page_size: How many rows to return; already clamped by the caller.
             page_token: Cursor from a previous page, or None for the first page.
+            month: Restrict to one calendar month.
+            category: Restrict to one category.
 
         Raises:
             InvalidPageTokenError: If `page_token` is not a cursor this API issued.
@@ -40,6 +55,8 @@ class TransactionQueryService:
                 cursor=(
                     (cursor.transaction_date, cursor.transaction_id) if cursor is not None else None
                 ),
+                month=month,
+                category=category,
             )
 
         # A full page means there may be more; a short page means we are done.

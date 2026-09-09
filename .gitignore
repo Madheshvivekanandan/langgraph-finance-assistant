@@ -19,6 +19,9 @@ frontend/dist/
 # LangGraph
 .langgraph_api/
 
+# UI screenshots from scripts/screenshot_ui.py
+.screenshots/
+
 # OS / editor
 .DS_Store
 .agent-loop/

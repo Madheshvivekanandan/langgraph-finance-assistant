@@ -1,10 +1,13 @@
 """Persistence access for transactions. The only place transaction SQL is written."""
 
 from datetime import date
+from decimal import Decimal
 
-from sqlalchemy import func, literal, select, tuple_
+from sqlalchemy import Date, Select, cast, func, literal, select, tuple_
 from sqlalchemy.orm import Session
 
+from app.domain.month import Month
+from app.domain.transaction_category import TransactionCategory
 from app.models.transaction import Transaction
 
 
@@ -25,7 +28,32 @@ class TransactionRepository:
         """Return the transaction with this id, or None."""
         return self._session.get(Transaction, transaction_id)
 
-    def list_page(self, *, limit: int, cursor: tuple[date, int] | None = None) -> list[Transaction]:
+    @staticmethod
+    def _apply_filters(
+        query: Select[tuple[Transaction]],
+        *,
+        month: Month | None,
+        category: TransactionCategory | None,
+    ) -> Select[tuple[Transaction]]:
+        """Narrow a transaction query by the allowlisted filters."""
+        if month is not None:
+            # Half-open range: never BETWEEN, which would double-count the boundary.
+            query = query.where(
+                Transaction.transaction_date >= month.start_date,
+                Transaction.transaction_date < month.end_date_exclusive,
+            )
+        if category is not None:
+            query = query.where(Transaction.category == category.value)
+        return query
+
+    def list_page(
+        self,
+        *,
+        limit: int,
+        cursor: tuple[date, int] | None = None,
+        month: Month | None = None,
+        category: TransactionCategory | None = None,
+    ) -> list[Transaction]:
         """Return one page, newest first, using keyset pagination.
 
         The sort is (transaction_date DESC, id DESC) - the id breaks ties so the
@@ -34,9 +62,11 @@ class TransactionRepository:
         Args:
             limit: Maximum rows to return.
             cursor: The (date, id) of the last row of the previous page.
+            month: Restrict to one calendar month.
+            category: Restrict to one category.
         """
         query = (
-            select(Transaction)
+            self._apply_filters(select(Transaction), month=month, category=category)
             .order_by(Transaction.transaction_date.desc(), Transaction.id.desc())
             .limit(limit)
         )
@@ -57,3 +87,62 @@ class TransactionRepository:
             .select_from(Transaction)
             .where(Transaction.statement_id == statement_id)
         ).scalar_one()
+
+    def monthly_totals(self) -> list[tuple[date, Decimal, Decimal, int]]:
+        """Return (month_start, income, expense, count) per month, newest first.
+
+        One grouped query rather than one query per month: the dashboard needs
+        every month at once for its trend line.
+        """
+        month_start = cast(func.date_trunc("month", Transaction.transaction_date), Date)
+        query = (
+            select(
+                month_start.label("month_start"),
+                func.coalesce(
+                    func.sum(Transaction.amount).filter(Transaction.direction == "CREDIT"),
+                    0,
+                ).label("income"),
+                func.coalesce(
+                    func.sum(Transaction.amount).filter(Transaction.direction == "DEBIT"),
+                    0,
+                ).label("expense"),
+                func.count().label("transaction_count"),
+            )
+            .group_by(month_start)
+            .order_by(month_start.desc())
+        )
+        return [
+            (row.month_start, row.income, row.expense, row.transaction_count)
+            for row in self._session.execute(query)
+        ]
+
+    def category_totals(self, *, month: Month | None = None) -> list[tuple[str, Decimal, int]]:
+        """Return (category, amount, count) for spending, largest first.
+
+        DEBIT only: a breakdown of where money went should not have income mixed
+        into it.
+
+        Args:
+            month: Restrict to one calendar month, or None for all time.
+        """
+        total = func.sum(Transaction.amount)
+        query = (
+            select(
+                Transaction.category,
+                total.label("amount"),
+                # Not "count": Row inherits tuple.count, and the label would shadow it.
+                func.count().label("transaction_count"),
+            )
+            .where(Transaction.direction == "DEBIT")
+            .group_by(Transaction.category)
+            .order_by(total.desc())
+        )
+        if month is not None:
+            query = query.where(
+                Transaction.transaction_date >= month.start_date,
+                Transaction.transaction_date < month.end_date_exclusive,
+            )
+        return [
+            (row.category, row.amount, row.transaction_count)
+            for row in self._session.execute(query)
+        ]

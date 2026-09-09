@@ -23,3 +23,11 @@ export function formatIsoDate(isoDate: string): string {
   const [year, month, day] = isoDate.split('-').map(Number)
   return DATE_FORMATTER.format(new Date(year, month - 1, day))
 }
+
+const MONTH_FORMATTER = new Intl.DateTimeFormat('en-IN', { month: 'short', year: '2-digit' })
+
+/** Format "2026-07" as "Jul 26". */
+export function formatMonthLabel(month: string): string {
+  const [year, monthNumber] = month.split('-').map(Number)
+  return MONTH_FORMATTER.format(new Date(year, monthNumber - 1, 1))
+}
