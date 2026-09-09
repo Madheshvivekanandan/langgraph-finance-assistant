@@ -8,6 +8,7 @@ from app.db.session import get_session_factory
 from app.graphs.statement.graph import graph as statement_graph
 from app.services.statement_ingestion_service import StatementIngestionService
 from app.services.statement_query_service import StatementQueryService
+from app.services.summary_service import SummaryService
 from app.services.transaction_category_service import TransactionCategoryService
 from app.services.transaction_query_service import TransactionQueryService
 
@@ -20,6 +21,11 @@ def get_statement_ingestion_service() -> StatementIngestionService:
 def get_statement_query_service() -> StatementQueryService:
     """Build the statement read service."""
     return StatementQueryService(get_session_factory())
+
+
+def get_summary_service() -> SummaryService:
+    """Build the dashboard aggregate service."""
+    return SummaryService(get_session_factory())
 
 
 def get_transaction_category_service() -> TransactionCategoryService:
@@ -36,6 +42,7 @@ StatementIngestionServiceDep = Annotated[
     StatementIngestionService, Depends(get_statement_ingestion_service)
 ]
 StatementQueryServiceDep = Annotated[StatementQueryService, Depends(get_statement_query_service)]
+SummaryServiceDep = Annotated[SummaryService, Depends(get_summary_service)]
 TransactionCategoryServiceDep = Annotated[
     TransactionCategoryService, Depends(get_transaction_category_service)
 ]

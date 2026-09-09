@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 from app.domain.exceptions import (
     AppError,
     DuplicateStatementError,
+    InvalidMonthError,
     InvalidPageTokenError,
     StatementNotFoundError,
     StatementParseError,
@@ -79,6 +80,15 @@ def register_error_handlers(app: FastAPI) -> None:
             detail=str(exc),
         )
 
+    @app.exception_handler(InvalidMonthError)
+    async def _bad_month(_: Request, exc: InvalidMonthError) -> Response:
+        return _problem(
+            status=400,
+            code="INVALID_MONTH",
+            title="Invalid month filter",
+            detail=str(exc),
+        )
+
     @app.exception_handler(InvalidPageTokenError)
     async def _bad_token(_: Request, exc: InvalidPageTokenError) -> Response:
         return _problem(
@@ -105,6 +115,7 @@ def register_error_handlers(app: FastAPI) -> None:
         _parse_failed,
         _not_found,
         _transaction_not_found,
+        _bad_month,
         _bad_token,
         _unexpected,
     )

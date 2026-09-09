@@ -5,6 +5,8 @@ from typing import Annotated
 from fastapi import APIRouter, Path, Query
 
 from app.api.deps import TransactionCategoryServiceDep, TransactionQueryServiceDep
+from app.domain.month import Month
+from app.domain.transaction_category import TransactionCategory
 from app.schemas.category_update_in import CategoryUpdateIn
 from app.schemas.transaction_out import TransactionOut
 from app.schemas.transaction_page_out import TransactionPageOut
@@ -22,7 +24,7 @@ MAX_PAGE_SIZE = 200
     summary="List transactions, newest first",
     description=(
         "Keyset-paginated. Follow the `next` token until it is absent; a short "
-        "page does not mean the end."
+        "page does not mean the end. Optionally filtered by month and category."
     ),
 )
 def list_transactions(
@@ -31,13 +33,27 @@ def list_transactions(
         int, Query(ge=1, description="Rows per page; capped at 200")
     ] = DEFAULT_PAGE_SIZE,
     page_token: Annotated[str | None, Query(description="Cursor from a previous page")] = None,
+    month: Annotated[str | None, Query(description="Calendar month as YYYY-MM")] = None,
+    category: Annotated[
+        TransactionCategory | None, Query(description="Restrict to one category")
+    ] = None,
 ) -> TransactionPageOut:
     """Return one page of transactions.
 
+    Filters are allowlisted: only month and category, both validated before any
+    query runs. Send the same filters with each page token, since the cursor
+    carries a position and nothing else.
+
     Raises:
         InvalidPageTokenError: If `page_token` was not issued by this API.
+        InvalidMonthError: If `month` is not a usable YYYY-MM value.
     """
-    page = service.list_page(page_size=min(page_size, MAX_PAGE_SIZE), page_token=page_token)
+    page = service.list_page(
+        page_size=min(page_size, MAX_PAGE_SIZE),
+        page_token=page_token,
+        month=Month.parse(month) if month else None,
+        category=category,
+    )
     return TransactionPageOut(
         items=[TransactionOut.model_validate(item) for item in page.items],
         next=page.next_token,
