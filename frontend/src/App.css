@@ -131,6 +131,12 @@ td {
   vertical-align: top;
 }
 
+/* The panel edge already closes the table; a rule under the last row reads as
+   a divider before nothing. */
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
 th {
   font-size: 0.775rem;
   text-transform: uppercase;

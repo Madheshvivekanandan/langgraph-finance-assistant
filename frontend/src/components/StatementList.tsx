@@ -29,7 +29,11 @@ export function StatementList({ statements }: Props) {
           <tr>
             <th scope="col">File</th>
             <th scope="col">Status</th>
-            <th scope="col">Transactions</th>
+            {/* Must carry .numeric like its cells, or the header sits left of
+                the numbers it labels. */}
+            <th scope="col" className="numeric">
+              Transactions
+            </th>
             <th scope="col">Period</th>
           </tr>
         </thead>
