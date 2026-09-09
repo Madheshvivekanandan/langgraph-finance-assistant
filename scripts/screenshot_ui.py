@@ -4,8 +4,9 @@ The dataviz skill's last step is "render it and look at it" - a palette
 validator checks colour, not geometry. This script is how that step gets done
 without a person squinting at three browser windows.
 
-It catches, automatically, the two failures that are invisible in code review:
-a page that scrolls horizontally, and text clipped by its own container.
+It catches, automatically, three failures that are invisible in code review:
+a page that scrolls horizontally, text clipped by its own container, and a
+table column whose header does not line up with the values beneath it.
 
     docker compose up -d          # the app must be running
     python scripts/screenshot_ui.py
@@ -30,6 +31,39 @@ VIEWPORTS = [
 ]
 # Elements whose text must never be cut off by its own box.
 CLIP_SELECTOR = ".stat-value, .stat-label, .bar-value, .bar-label"
+
+# Every column header must share both its alignment and its visible text edge
+# with the cells below it. A header drifting from its own values reads as data
+# in the wrong column, and no amount of correct markup makes that look right.
+ALIGNMENT_CHECK = """() => {
+  const problems = [];
+  document.querySelectorAll('table').forEach((table, ti) => {
+    const headers = [...table.querySelectorAll('thead th')];
+    const rows = [...table.querySelectorAll('tbody tr')];
+    headers.forEach((th, ci) => {
+      const headerAlign = getComputedStyle(th).textAlign;
+      const headerBox = th.getBoundingClientRect();
+      rows.forEach((tr, ri) => {
+        const td = tr.children[ci];
+        if (!td) return;
+        const cellAlign = getComputedStyle(td).textAlign;
+        const cellBox = td.getBoundingClientRect();
+        const where = `table ${ti} col "${th.textContent.trim()}" row ${ri}`;
+        if (headerAlign !== cellAlign) {
+          problems.push(`${where}: header is ${headerAlign}, cell is ${cellAlign}`);
+          return;
+        }
+        const drift = cellAlign === 'right'
+          ? Math.abs(headerBox.right - cellBox.right)
+          : Math.abs(headerBox.left - cellBox.left);
+        if (drift > 1) {
+          problems.push(`${where}: ${cellAlign} edges differ by ${Math.round(drift)}px`);
+        }
+      });
+    });
+  });
+  return problems;
+}"""
 
 
 def main() -> int:
@@ -60,12 +94,19 @@ def main() -> int:
                 CLIP_SELECTOR,
             )
 
+            misaligned = page.evaluate(ALIGNMENT_CHECK)
+
             if overflow > 0:
                 failures.append(f"{name}: page scrolls horizontally by {overflow}px")
             if clipped:
                 failures.append(f"{name}: text clipped -> {clipped}")
-            status = "ok" if overflow == 0 and not clipped else "FAIL"
-            print(f"  {name:<16} {status:<5} overflow={overflow}px clipped={len(clipped)}")
+            failures += [f"{name}: {problem}" for problem in misaligned]
+
+            ok = overflow == 0 and not clipped and not misaligned
+            print(
+                f"  {name:<16} {'ok' if ok else 'FAIL':<5} "
+                f"overflow={overflow}px clipped={len(clipped)} misaligned={len(misaligned)}"
+            )
             page.close()
         browser.close()
 
