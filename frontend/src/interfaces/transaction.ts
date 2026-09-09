@@ -1,5 +1,7 @@
 export type TransactionDirection = 'DEBIT' | 'CREDIT'
 
+export type CategorizationSource = 'NONE' | 'RULE' | 'LLM' | 'USER'
+
 export interface Transaction {
   id: number
   statement_id: number
@@ -8,6 +10,10 @@ export interface Transaction {
   /** Decimal string, never a float — parse only for display. */
   amount: string
   direction: TransactionDirection
+  category: string
+  categorized_by: CategorizationSource
+  /** Only present when a model made the guess. */
+  confidence?: number
 }
 
 export interface TransactionPage {

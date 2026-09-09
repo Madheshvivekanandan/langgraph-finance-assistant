@@ -1,6 +1,7 @@
+import type { CategoryList } from '../interfaces/category'
 import type { ProblemDetail } from '../interfaces/problem'
 import type { Statement, StatementList } from '../interfaces/statement'
-import type { TransactionPage } from '../interfaces/transaction'
+import type { Transaction, TransactionPage } from '../interfaces/transaction'
 
 const API_BASE = '/api/v1'
 const REQUEST_TIMEOUT_MS = 30_000
@@ -57,4 +58,19 @@ export function fetchTransactions(pageToken?: string): Promise<TransactionPage> 
   const params = new URLSearchParams({ page_size: '50' })
   if (pageToken) params.set('page_token', pageToken)
   return request<TransactionPage>(`/transactions?${params.toString()}`)
+}
+
+export function fetchCategories(): Promise<CategoryList> {
+  return request<CategoryList>('/categories')
+}
+
+export function setTransactionCategory(
+  transactionId: number,
+  category: string,
+): Promise<Transaction> {
+  return request<Transaction>(`/transactions/${transactionId}/category`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ category }),
+  })
 }

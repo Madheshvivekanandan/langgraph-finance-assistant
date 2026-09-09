@@ -35,5 +35,13 @@ class StatementNotFoundError(DomainError):
         self.statement_id = statement_id
 
 
+class TransactionNotFoundError(DomainError):
+    """No transaction exists with the requested id."""
+
+    def __init__(self, transaction_id: int) -> None:
+        super().__init__(f"transaction {transaction_id} not found")
+        self.transaction_id = transaction_id
+
+
 class InvalidPageTokenError(DomainError):
     """A pagination cursor was malformed or expired."""

@@ -160,3 +160,32 @@ th {
 .message-error {
   color: var(--debit);
 }
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.category-select {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  max-width: 11rem;
+}
+
+.category-select:disabled {
+  opacity: 0.55;
+}
+
+/* A model guess is provisional until a person confirms or changes it. */
+.category-select.source-llm {
+  border-style: dashed;
+  border-color: var(--accent);
+}
+
+.category-select.source-none {
+  border-color: var(--debit);
+}

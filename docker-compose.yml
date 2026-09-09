@@ -62,5 +62,19 @@ services:
     depends_on:
       - backend
 
+  pgweb:
+    # Browse the database at http://localhost:8081
+    image: sosedoff/pgweb:latest
+    container_name: my_finance_pgweb
+    environment:
+      PGWEB_DATABASE_URL: postgres://${POSTGRES_USER:-myfinance}:${POSTGRES_PASSWORD:-myfinance}@postgres:5432/${POSTGRES_DB:-myfinance}?sslmode=disable
+    ports:
+      # Loopback only: pgweb ships no authentication, so this must never be
+      # reachable from the network.
+      - "127.0.0.1:8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   pgdata:

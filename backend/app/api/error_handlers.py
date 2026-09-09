@@ -16,6 +16,7 @@ from app.domain.exceptions import (
     InvalidPageTokenError,
     StatementNotFoundError,
     StatementParseError,
+    TransactionNotFoundError,
 )
 from app.schemas.problem_detail import ProblemDetail
 
@@ -69,6 +70,15 @@ def register_error_handlers(app: FastAPI) -> None:
             detail=str(exc),
         )
 
+    @app.exception_handler(TransactionNotFoundError)
+    async def _transaction_not_found(_: Request, exc: TransactionNotFoundError) -> Response:
+        return _problem(
+            status=404,
+            code="TRANSACTION_NOT_FOUND",
+            title="Transaction not found",
+            detail=str(exc),
+        )
+
     @app.exception_handler(InvalidPageTokenError)
     async def _bad_token(_: Request, exc: InvalidPageTokenError) -> Response:
         return _problem(
@@ -94,6 +104,7 @@ def register_error_handlers(app: FastAPI) -> None:
         _duplicate,
         _parse_failed,
         _not_found,
+        _transaction_not_found,
         _bad_token,
         _unexpected,
     )

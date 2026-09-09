@@ -15,7 +15,7 @@ Two graphs, deliberately different in shape, so both major LangGraph styles get 
 
 ## Stack
 
-- **Backend:** Python 3.12, FastAPI, SQLAlchemy 2 + Alembic, LangGraph 1.2.x, `langchain-anthropic`
+- **Backend:** Python 3.12+, FastAPI, SQLAlchemy 2 + Alembic, LangGraph 1.2.x, `langchain-openai`
 - **Database:** Postgres (docker-compose) — app tables + LangGraph checkpointer tables
 - **Frontend:** Vite + React 18 + TypeScript + MUI, Recharts for charts (skip Refine for now — fewer moving parts while learning)
 - **Dev tooling:** LangGraph Studio via `langgraph dev` (graph visualization + step-through debugging), ruff/black/mypy, pytest
@@ -46,7 +46,7 @@ My_Finance/
 
 - `statements` — id, filename, period_month, uploaded_at, status
 - `transactions` — id, statement_id FK, date, description, amount (Decimal), direction, category, categorized_by (rule|llm|user), confidence
-- `categories` — seeded lookup (Groceries, Rent, Transport, Dining, Salary, …)
+- categories — a `TransactionCategory` enum in code, enforced by a CHECK constraint (no lookup table: the set is small and stable, and one definition keeps the rules, the model prompt, and the database from drifting apart)
 - Chat memory lives in LangGraph's own checkpointer tables — nothing to design.
 
 ## Phases
@@ -59,8 +59,8 @@ Scaffold backend/frontend, docker-compose Postgres, Alembic baseline. Build a tr
 ### Phase 1 — CSV statement upload → transactions in DB  ✅ **done**  *(learn: state schemas, nodes, conditional edges, error handling)*
 Upload endpoint accepts a bank CSV. Statement pipeline v1: `parse_csv → normalize → store` with a conditional edge to an error path for malformed files, `retry_policy` on flaky nodes. Plain transactions table view in React. **Done when:** uploading a real statement shows its transactions in the UI, and the run is inspectable step-by-step in Studio.
 
-### Phase 2 — Categorization  *(learn: LLM nodes, structured output)*
-Add `categorize` node: rules first (regex/merchant map — free and instant), LLM fallback with structured output for the rest, batched to keep cost low. Store category + confidence + who categorized. Manual category override in the UI (feeds the rules map). **Done when:** an uploaded statement comes back fully categorized and corrections stick.
+### Phase 2 — Categorization  ✅ **done**  *(learn: LLM nodes, structured output)*
+Add `categorize` node: rules first (regex/merchant map — free and instant), LLM fallback with structured output for the rest, batched to keep cost low. Store category + confidence + who categorized. Manual category override in the UI. (Rules live in code, not a table; having a correction auto-write a new rule needs fuzzy merchant extraction, deferred to Phase 5.) **Done when:** an uploaded statement comes back fully categorized and corrections stick.
 
 ### Phase 3 — Dashboard  *(learn: nothing new in LangGraph — pure product payoff)*
 Monthly summary (income/expense/net), category breakdown donut, month-over-month trend line, filterable transaction table. Follow the dataviz skill for the charts. **Done when:** you can see where a month's money went at a glance.

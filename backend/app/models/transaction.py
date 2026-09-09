@@ -36,6 +36,12 @@ class Transaction(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     direction: Mapped[str] = mapped_column(String(8), nullable=False)
+    category: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="UNCATEGORIZED"
+    )
+    categorized_by: Mapped[str] = mapped_column(String(8), nullable=False, server_default="NONE")
+    # Only the LLM path records one; a rule or a person is not a probability.
+    confidence: Mapped[Decimal | None] = mapped_column(Numeric(3, 2), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

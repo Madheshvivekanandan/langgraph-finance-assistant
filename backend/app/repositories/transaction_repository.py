@@ -21,6 +21,10 @@ class TransactionRepository:
         """Stage many transaction rows in one round trip."""
         self._session.add_all(transactions)
 
+    def find_by_id(self, transaction_id: int) -> Transaction | None:
+        """Return the transaction with this id, or None."""
+        return self._session.get(Transaction, transaction_id)
+
     def list_page(self, *, limit: int, cursor: tuple[date, int] | None = None) -> list[Transaction]:
         """Return one page, newest first, using keyset pagination.
 

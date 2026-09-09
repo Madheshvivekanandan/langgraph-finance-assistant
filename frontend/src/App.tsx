@@ -9,6 +9,9 @@ function App() {
   const {
     statements,
     transactions,
+    categories,
+    savingIds,
+    updateCategory,
     status,
     errorMessage,
     hasMore,
@@ -42,9 +45,12 @@ function App() {
             <StatementList statements={statements} />
             <TransactionTable
               transactions={transactions}
+              categories={categories}
+              savingIds={savingIds}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               onLoadMore={() => void loadMore()}
+              onCategoryChange={(id, category) => void updateCategory(id, category)}
             />
           </>
         )}

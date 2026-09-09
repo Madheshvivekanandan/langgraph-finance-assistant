@@ -54,6 +54,8 @@ Or open http://localhost:5173 and upload it through the UI.
 | `POST /api/v1/statements` | Upload a statement CSV; runs the ingestion graph. 201 with the outcome, 409 if already uploaded |
 | `GET /api/v1/statements` | Recent statements with their status |
 | `GET /api/v1/transactions` | Transactions, newest first, keyset-paginated via `page_size` + `page_token` |
+| `PUT /api/v1/transactions/{id}/category` | Override a category; records the source as USER |
+| `GET /api/v1/categories` | The category vocabulary the UI offers |
 | `GET /api/v1/health` | Liveness |
 
 Errors are `application/problem+json` (RFC 9457) with a stable `code` field.
@@ -69,6 +71,23 @@ Column names are matched case-insensitively against common aliases, in either la
 Dates are read **day-first** (`03/04/2026` is 3 April), matching Indian bank exports.
 Unreadable rows (opening balances, footers) are skipped; a file where nothing is
 readable is stored as `FAILED` with the reason.
+
+## Categorization
+
+Every ingested transaction is categorized in two stages, cheapest first:
+
+1. **Keyword rules** (`backend/app/graphs/statement/category_rules.py`) — free,
+   instant, deterministic. Handles most Indian bank descriptions (SWIGGY, BLINKIT,
+   TNEB, ATM, SALARY, …).
+2. **OpenAI fallback** — only the rows no rule matched, batched into one call, with
+   the category set enforced by the response schema rather than by the prompt.
+
+If the rules categorize everything, **the model is never called**. If
+`OPENAI_API_KEY` is missing, ingestion still succeeds and those rows stay
+`UNCATEGORIZED` — categorization enriches a statement, it does not define one.
+
+Correct anything in the UI: the stored source becomes `USER`, and any model
+confidence is cleared.
 
 ## LangGraph Studio (visual graph debugger)
 

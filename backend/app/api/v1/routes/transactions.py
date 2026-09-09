@@ -2,9 +2,10 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Path, Query
 
-from app.api.deps import TransactionQueryServiceDep
+from app.api.deps import TransactionCategoryServiceDep, TransactionQueryServiceDep
+from app.schemas.category_update_in import CategoryUpdateIn
 from app.schemas.transaction_out import TransactionOut
 from app.schemas.transaction_page_out import TransactionPageOut
 
@@ -41,3 +42,31 @@ def list_transactions(
         items=[TransactionOut.model_validate(item) for item in page.items],
         next=page.next_token,
     )
+
+
+@router.put(
+    "/{transaction_id}/category",
+    response_model=TransactionOut,
+    response_model_exclude_none=True,
+    summary="Set a transaction's category",
+    description=(
+        "Records the category on a person's authority. The stored source becomes "
+        "USER, so a later re-run will not overwrite the correction."
+    ),
+)
+def set_transaction_category(
+    service: TransactionCategoryServiceDep,
+    body: CategoryUpdateIn,
+    transaction_id: Annotated[int, Path(ge=1, description="Transaction to recategorize")],
+) -> TransactionOut:
+    """Override a transaction's category.
+
+    PUT rather than PATCH: this replaces the whole category assignment, so it is
+    idempotent and needs no patch-document format. No If-Match, because this is
+    a single-user application with no concurrent writers.
+
+    Raises:
+        TransactionNotFoundError: If no such transaction exists.
+    """
+    transaction = service.set_category(transaction_id=transaction_id, category=body.category)
+    return TransactionOut.model_validate(transaction)

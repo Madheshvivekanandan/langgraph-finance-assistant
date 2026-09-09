@@ -50,6 +50,9 @@ class StoreTransactionsNode:
                         description=item.description,
                         amount=item.amount,
                         direction=item.direction.value,
+                        category=item.category.value,
+                        categorized_by=item.categorized_by.value,
+                        confidence=item.confidence,
                     )
                     for item in parsed
                 ]

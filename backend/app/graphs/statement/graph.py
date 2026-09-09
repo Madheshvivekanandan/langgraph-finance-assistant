@@ -1,7 +1,10 @@
 """The statement ingestion graph.
 
-    START -> create_statement -> parse_csv -> normalize_rows -> store_transactions -> END
-                                     |              |
+    START -> create_statement -> parse_csv -> normalize_rows -> apply_category_rules
+                                     |              |                      |
+                                     |              |        (all matched) |  (some left)
+                                     |              |                      v         v
+                                     |              |     store_transactions <- categorize_with_llm
                                      +--------------+--> record_failure -> END
 
 Both conditional edges route to `record_failure` whenever a node has put an
@@ -15,25 +18,36 @@ from langgraph.types import RetryPolicy
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.clients.category_suggester_factory import build_category_suggester
 from app.db.session import get_session_factory
+from app.domain.category_suggester import CategorySuggester
 from app.graphs.statement.graph_input import StatementGraphInput
+from app.graphs.statement.nodes.apply_category_rules import apply_category_rules
+from app.graphs.statement.nodes.categorize_with_llm_node import CategorizeWithLlmNode
 from app.graphs.statement.nodes.create_statement_node import CreateStatementNode
 from app.graphs.statement.nodes.normalize_rows import normalize_rows
 from app.graphs.statement.nodes.parse_csv import parse_csv
 from app.graphs.statement.nodes.record_failure_node import RecordFailureNode
 from app.graphs.statement.nodes.store_transactions_node import StoreTransactionsNode
-from app.graphs.statement.routing import route_after_normalize, route_after_parse
+from app.graphs.statement.routing import (
+    route_after_normalize,
+    route_after_parse,
+    route_after_rules,
+)
 from app.graphs.statement.state import StatementState
 
 
 def build_statement_graph(
     session_factory: sessionmaker[Session],
+    category_suggester: CategorySuggester | None = None,
 ) -> CompiledStateGraph[StatementState]:
     """Wire up the ingestion pipeline.
 
     Args:
         session_factory: Injected so tests can run the graph against a
             throwaway database.
+        category_suggester: Fills in categories no keyword rule matched. None
+            disables the model step; ingestion still succeeds.
     """
     # arg-type: LangGraph types `input_schema` as the state schema itself, but the
     # runtime explicitly supports a narrower input schema - which is the point here.
@@ -52,6 +66,8 @@ def build_statement_graph(
         # would fail identically every time, so it is deliberately not retried.
         retry_policy=RetryPolicy(max_attempts=3, retry_on=OperationalError),
     )
+    builder.add_node("apply_category_rules", apply_category_rules)
+    builder.add_node("categorize_with_llm", CategorizeWithLlmNode(category_suggester))
     builder.add_node("record_failure", RecordFailureNode(session_factory))
 
     builder.add_edge(START, "create_statement")
@@ -64,8 +80,20 @@ def build_statement_graph(
     builder.add_conditional_edges(
         "normalize_rows",
         route_after_normalize,
-        {"store_transactions": "store_transactions", "record_failure": "record_failure"},
+        {
+            "apply_category_rules": "apply_category_rules",
+            "record_failure": "record_failure",
+        },
     )
+    builder.add_conditional_edges(
+        "apply_category_rules",
+        route_after_rules,
+        {
+            "categorize_with_llm": "categorize_with_llm",
+            "store_transactions": "store_transactions",
+        },
+    )
+    builder.add_edge("categorize_with_llm", "store_transactions")
     builder.add_edge("store_transactions", END)
     builder.add_edge("record_failure", END)
 
@@ -74,4 +102,4 @@ def build_statement_graph(
 
 # Module-level instance so langgraph.json (and therefore LangGraph Studio) points
 # at exactly the graph the API runs.
-graph = build_statement_graph(get_session_factory())
+graph = build_statement_graph(get_session_factory(), build_category_suggester())
