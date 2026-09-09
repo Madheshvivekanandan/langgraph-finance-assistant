@@ -20,7 +20,9 @@
 
 ## Runnable check
 
-<!-- REQUIRED. An executable command that passes iff the task is done. -->
+<!-- REQUIRED. An executable command that passes iff the task is done.
+     Acceptance criteria that cannot be automated: list each under a "Manual checks" line —
+     the verifier reports them as unverified rather than running them. -->
 
 ```
 <command>

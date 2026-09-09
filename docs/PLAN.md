@@ -65,8 +65,10 @@ Add `categorize` node: rules first (regex/merchant map — free and instant), LL
 ### Phase 3 — Dashboard  ✅ **done**  *(learn: nothing new in LangGraph — pure product payoff)*
 Monthly summary (income/expense/net) as KPI tiles, category breakdown as a **bar chart** (not a donut — the dataviz skill is clear that bar length beats arc angle for magnitude comparison), month-over-month trend line, filterable transaction table. **Done when:** you can see where a month's money went at a glance.
 
-### Phase 4 — Chat agent  *(learn: create_agent, tools, checkpointer memory, streaming)*
-`create_agent` with 2–3 safe tools (`get_monthly_summary`, `search_transactions`, `spending_by_category`) — tools call repositories, never raw SQL from the LLM. `AsyncPostgresSaver` + `thread_id` for conversation memory; SSE streaming to a React chat panel. **Done when:** "how much did I spend on dining in July?" gets a correct, streamed answer with follow-up memory.
+### Phase 4 — Chat agent  ✅ **done**  *(learn: create_agent, tools, checkpointer memory, streaming)*
+`create_agent` with 3 safe tools (`get_monthly_summary`, `get_spending_by_category`, `search_transactions`) — tools call services/repositories, never raw SQL from the LLM. `PostgresSaver` + `thread_id` for conversation memory; SSE streaming to a React chat panel. **Done when:** "how much did I spend on dining in July?" gets a correct, streamed answer with follow-up memory.
+
+**Deviation from this plan:** uses the **sync** `langgraph.checkpoint.postgres.PostgresSaver`, not `AsyncPostgresSaver`. Every repository, service, and route in this codebase is sync SQLAlchemy; FastAPI already runs `def` routes (and iterates a sync `StreamingResponse` generator) in its threadpool, so a fully sync graph/tools/route never blocks the event loop and avoids introducing a second, half-finished async stack for one feature. Same tables, same semantics — see `.agent-loop/runs/2026-09-09-phase-4-chat-agent/plan.md` (D1) for the full rationale.
 
 ### Phase 5 (optional, later) — Stretch goals
 PDF statement parsing; `interrupt()` human-in-the-loop review of low-confidence categorizations (the classic HITL lesson); embed a live mermaid/React Flow graph view in the frontend; multi-month insights ("recurring subscriptions", anomaly flags).

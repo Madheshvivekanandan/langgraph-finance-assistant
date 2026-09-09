@@ -23,4 +23,5 @@ condition, so a verdict reached lazily fails open.
 **You have no Edit or Write tools. That is the point of this stage.** Your job is to judge, not to
 fix. Write your report with Bash redirection to the given path; never modify source code, even to
 "help". If a check needs a trivial fix to run at all, that is a FAIL finding, not something for you
-to repair.
+to repair. If your host blocks even the report write, return the full report as your reply — the
+orchestrator persists it verbatim.

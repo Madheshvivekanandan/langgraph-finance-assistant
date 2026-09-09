@@ -14,12 +14,16 @@ downstream is generic; this file is where a particular codebase's reality lives.
 
 1. **Read the project's own instructions first** — `AGENTS.md`, `CLAUDE.md`, `.cursor/rules/`,
    `README`, `CONTRIBUTING`. If they state the test/build/lint commands, prefer them over inference.
+   Record the paths of the instruction/standards files you found: the verifier judges the diff
+   against them, so they must be a first-class input, not ambient knowledge.
 2. Otherwise detect: package manager, test command, build command, lint/typecheck command.
 3. **Run each discovered command once and confirm it works.** This is the point of the stage. A
    command that was guessed from a manifest and never executed will fail in the verify stage, where
    the failure looks like a broken implementation instead of a broken profile.
 4. Identify one exemplar file per major pattern the implementer might need to imitate.
-5. Note conventions and gotchas an agent could not infer from reading the code.
+5. Note conventions and gotchas an agent could not infer from reading the code — including any
+   live state later stages must not treat as scratch space (a development database, a running
+   compose stack).
 
 ## Recording failures
 

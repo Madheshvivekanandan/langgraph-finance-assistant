@@ -10,6 +10,22 @@ from app.domain.month import Month
 from app.domain.transaction_category import TransactionCategory
 from app.models.transaction import Transaction
 
+_LIKE_ESCAPE_CHAR = "\\"
+
+
+def _escape_like(text_: str) -> str:
+    """Neutralise ILIKE wildcards so a user's search text matches literally.
+
+    Escapes the escape character itself first, then the two ILIKE wildcards -
+    otherwise a literal `%` or `_` in a description would silently act as a
+    wildcard instead of matching itself.
+    """
+    return (
+        text_.replace(_LIKE_ESCAPE_CHAR, _LIKE_ESCAPE_CHAR * 2)
+        .replace("%", f"{_LIKE_ESCAPE_CHAR}%")
+        .replace("_", f"{_LIKE_ESCAPE_CHAR}_")
+    )
+
 
 class TransactionRepository:
     """Reads and writes transaction rows.
@@ -78,6 +94,36 @@ class TransactionRepository:
                 tuple_(Transaction.transaction_date, Transaction.id)
                 < tuple_(literal(cursor_date), literal(cursor_id))
             )
+        return list(self._session.execute(query).scalars())
+
+    def search(
+        self,
+        *,
+        text: str | None = None,
+        month: Month | None = None,
+        category: TransactionCategory | None = None,
+        limit: int = 20,
+    ) -> list[Transaction]:
+        """Find individual transactions, newest first.
+
+        For the chat agent's `search_transactions` tool - free text over
+        `description` only, since `Transaction` has no separate merchant column.
+
+        Args:
+            text: Matches anywhere in the description, case-insensitively.
+                None or empty skips the text filter entirely.
+            month: Restrict to one calendar month.
+            category: Restrict to one category.
+            limit: Maximum rows to return; already clamped by the caller.
+        """
+        query = self._apply_filters(select(Transaction), month=month, category=category)
+        if text:
+            query = query.where(
+                Transaction.description.ilike(f"%{_escape_like(text)}%", escape=_LIKE_ESCAPE_CHAR)
+            )
+        query = query.order_by(Transaction.transaction_date.desc(), Transaction.id.desc()).limit(
+            limit
+        )
         return list(self._session.execute(query).scalars())
 
     def count_for_statement(self, statement_id: int) -> int:

@@ -2,7 +2,9 @@
 
 **Reads:** `plan.md` (or `task.md`), `test-report.md`, `implementation.md`, the iteration number,
 and the current diff. **Writes:** appends to `implementation.md`, plus code changes.
-**Restrictions:** may modify source code, within the plan's scope only.
+**Restrictions:** may modify source code, within the plan's scope only. The development
+environment is not scratch space: remove any state you create while reproducing, and record every
+environment side effect (seeded data, rebuilt or restarted services) in your report.
 **Budget:** at most 25 turns per iteration. The orchestrator caps the loop at 3 iterations.
 **Reasoning demand:** high. Root-causing is reasoning-heaviest, and a weak model here reaches for
 the symptom suppressions this contract forbids.

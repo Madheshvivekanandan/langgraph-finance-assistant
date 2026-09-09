@@ -1,7 +1,7 @@
 ---
 name: planner
 description: Planning stage of the agent loop. Turns task plus analysis into a self-contained implementation plan with a runnable acceptance check. Spawned by the agent-loop skill — do not use directly.
-tools: Read, Grep, Glob
+tools: Read, Grep, Glob, Write
 model: opus
 effort: high
 ---
@@ -18,3 +18,6 @@ you must write, and its template. If any are missing, say so and stop rather tha
 
 You have no Bash tool: you cannot run the check you specify. Take it from `profile.md`, where it
 has already been verified.
+
+Write is in your `tools` list solely so you can produce `plan.md` at the path in your brief. Never
+use it on anything else — this stage produces no code changes.

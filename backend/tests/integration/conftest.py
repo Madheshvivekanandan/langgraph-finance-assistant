@@ -8,9 +8,12 @@ from collections.abc import Iterator
 
 import pytest
 from fastapi.testclient import TestClient
+from langgraph.checkpoint.postgres import PostgresSaver
 from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.core.config import get_settings
+from app.db.psycopg_dsn import psycopg_dsn
 from app.db.session import get_session_factory
 from app.main import create_app
 
@@ -53,3 +56,14 @@ def client(session_factory: sessionmaker[Session]) -> Iterator[TestClient]:
     _ = session_factory  # ordering dependency: tables are cleaned before the app runs
     with TestClient(create_app()) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def chat_checkpointer() -> Iterator[PostgresSaver]:
+    """A real `PostgresSaver` against the test database.
+
+    Its tables were already created by `_setup_test_checkpointer` in
+    tests/conftest.py; this fixture only opens a connection to them.
+    """
+    with PostgresSaver.from_conn_string(psycopg_dsn(get_settings().database_url)) as saver:
+        yield saver

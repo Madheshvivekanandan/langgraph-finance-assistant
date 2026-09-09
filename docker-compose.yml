@@ -21,10 +21,11 @@ services:
       retries: 10
 
   migrate:
-    # One-shot: applies Alembic migrations, then exits. Kept out of the backend's
-    # startup path so N app replicas can never race the same migration.
+    # One-shot: applies Alembic migrations, then sets up the LangGraph
+    # checkpointer's own tables, then exits. Kept out of the backend's startup
+    # path so N app replicas can never race the same DDL.
     build: ./backend
-    command: ["alembic", "upgrade", "head"]
+    command: ["sh", "-c", "alembic upgrade head && python -m app.db.checkpointer_setup"]
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-myfinance}:${POSTGRES_PASSWORD:-myfinance}@postgres:5432/${POSTGRES_DB:-myfinance}
     depends_on:

@@ -2,10 +2,11 @@
 
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Request
 
 from app.db.session import get_session_factory
 from app.graphs.statement.graph import graph as statement_graph
+from app.services.chat_service import ChatService
 from app.services.statement_ingestion_service import StatementIngestionService
 from app.services.statement_query_service import StatementQueryService
 from app.services.summary_service import SummaryService
@@ -38,6 +39,16 @@ def get_transaction_query_service() -> TransactionQueryService:
     return TransactionQueryService(get_session_factory())
 
 
+def get_chat_service(request: Request) -> ChatService:
+    """Wrap the checkpointed agent the lifespan built, on `app.state.chat_agent`.
+
+    Read from `request.app.state` rather than built here: the checkpointed
+    agent owns a live `psycopg_pool.ConnectionPool` opened once at startup, not
+    per-request.
+    """
+    return ChatService(request.app.state.chat_agent)
+
+
 StatementIngestionServiceDep = Annotated[
     StatementIngestionService, Depends(get_statement_ingestion_service)
 ]
@@ -49,3 +60,4 @@ TransactionCategoryServiceDep = Annotated[
 TransactionQueryServiceDep = Annotated[
     TransactionQueryService, Depends(get_transaction_query_service)
 ]
+ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]

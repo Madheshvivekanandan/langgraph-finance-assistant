@@ -1,7 +1,8 @@
 # Stage: analyze
 
 **Reads:** `task.md`, `profile.md` · **Writes:** `analysis.md` (template: `templates/analysis.md`)
-**Restrictions:** read-only. Never edit code. Shell use is limited to read-only commands
+**Restrictions:** read-only on the codebase. Never edit code. Writing `analysis.md` is the one
+file write this stage performs. Shell use is limited to read-only commands
 (`git log`, `git grep`, `ls`, listing dependencies) — nothing that mutates files or state.
 **Budget:** at most 15 tool calls of exploration.
 **Reasoning demand:** moderate. The searching is mechanical; recognising that an existing utility
