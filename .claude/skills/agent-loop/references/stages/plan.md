@@ -1,8 +1,9 @@
 # Stage: plan
 
 **Reads:** `task.md`, `profile.md`, `analysis.md` · **Writes:** `plan.md` (template: `templates/plan.md`)
-**Restrictions:** read-only. Produce no code changes.
-**Budget:** at most 10 tool calls, to confirm details the analysis left open.
+**Restrictions:** read-only on the codebase. Produce no code changes; writing `plan.md` is the
+one file write this stage performs.
+**Budget:** at most 15 tool calls, to confirm details the analysis left open.
 **Reasoning demand:** high. This is the hardest thinking in the loop, and a wrong plan is the most
 expensive error available — every later stage faithfully executes it before anyone notices.
 
@@ -34,6 +35,11 @@ why in the rationale.
 On the runnable check: a command that always passes is worse than no check, because it terminates
 the loop with a false PASS. If the project has no test harness, the check may be a script you
 specify for the implementer to write — but then say so under **Files to change**.
+
+If part of the acceptance criteria cannot be automated (needs a human, or would mutate a live
+environment), do not silently drop it: list it under a **Manual checks** line in the same section.
+The verifier will not run those — it reports them as unverified, so the final PASS stays honest
+about its scope.
 
 ## Return
 

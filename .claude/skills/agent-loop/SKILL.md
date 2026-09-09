@@ -60,7 +60,7 @@ stage's output artifact follows the matching template in `references/templates/`
 |---|---|---|---|---|
 | profile | `references/stages/profile.md` | `profile.md` | — | moderate |
 | analyze | `references/stages/analyze.md` | `analysis.md` | ≤ 15 tool calls | moderate |
-| plan | `references/stages/plan.md` | `plan.md` | ≤ 10 tool calls (≤ 20 for tier L) | **high** |
+| plan | `references/stages/plan.md` | `plan.md` | ≤ 15 tool calls | **high** |
 | implement | `references/stages/implement.md` | `implementation.md` | — | moderate |
 | verify | `references/stages/verify.md` | `test-report.md` | ≤ 15 tool calls | **high** |
 | debug | `references/stages/debug.md` | appends to `implementation.md` | ≤ 25 turns | **high** |
@@ -95,6 +95,10 @@ model saved.
 
 If your host cannot vary the model, run the whole loop on the strongest one available and skip this
 section. Quality is unaffected; only cost is.
+
+**Artifact persistence:** a stage that cannot write its artifact (a host tool restriction)
+returns the full content instead of a summary; persist it verbatim to the artifact path yourself
+before applying the gate. Never let a gate fail over a host restriction the stage disclosed.
 
 ### Stage gates (check after each stage, before the next)
 
@@ -139,4 +143,6 @@ the cap, and do not re-plan without the user asking for it.
 ## Step 4 — Report
 
 Tell the user: the tier and mode chosen, what changed (files, one line each), the final verdict,
-where the evidence is, and the run-directory path. Keep it short — the artifacts are the audit log.
+where the evidence is, and the run-directory path. If `test-report.md` lists anything under **Not
+verified**, surface it verbatim — a PASS covers only what was executed, and the remaining manual
+checks are the user's to run. Keep it short — the artifacts are the audit log.

@@ -2,7 +2,9 @@
 
 **Reads:** `plan.md` (or `task.md`), `test-report.md`, `implementation.md`, the iteration number,
 and the current diff. **Writes:** appends to `implementation.md`, plus code changes.
-**Restrictions:** may modify source code, within the plan's scope only.
+**Restrictions:** may modify source code, within the plan's scope only. The development
+environment is not scratch space: remove any state you create while reproducing, and record every
+environment side effect (seeded data, rebuilt or restarted services) in your report.
 **Budget:** at most 25 turns per iteration. The orchestrator caps the loop at 3 iterations.
 **Reasoning demand:** high. Root-causing is reasoning-heaviest, and a weak model here reaches for
 the symptom suppressions this contract forbids.
@@ -33,19 +35,6 @@ which is worse than an honest FAIL — the loop's entire value is that PASS mean
 If a finding reveals the *plan itself* is wrong rather than the implementation, stop and say so in
 your report instead of forcing the code to match a broken plan. That is an escalation to the human,
 not a code change, and the orchestrator will handle it.
-
-
-## The environment is not scratch space
-
-You are running on a real machine with real state. Before you touch it:
-
-- The development database holds data someone cares about. Tests have their own; use it. If you
-  must seed rows to check something by hand, delete them afterwards and say in your artifact what
-  you created and removed.
-- Rebuilding or restarting a running stack is a side effect. Do it when the task needs it, and say
-  that you did — a later stage may otherwise judge a stale build and reach the wrong verdict.
-- Leave the working tree the way the next stage expects it: changes in place, nothing committed,
-  nothing pushed.
 
 ## Output
 

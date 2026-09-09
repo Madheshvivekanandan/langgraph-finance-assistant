@@ -14,6 +14,11 @@
 
 <!-- Language(s), package manager, framework — one line each. -->
 
+## Standards
+
+<!-- Paths of the project's instruction/standards files (AGENTS.md, CLAUDE.md, CONTRIBUTING…).
+     The verifier checks the diff against these. "None found" is a valid entry. -->
+
 ## Exemplars
 
 <!-- One representative file per major pattern, e.g. "route handler: src/routes/users.ts" -->

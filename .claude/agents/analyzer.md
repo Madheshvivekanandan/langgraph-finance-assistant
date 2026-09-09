@@ -15,8 +15,9 @@ Your brief also gives you absolute paths to `task.md`, `profile.md`, the `analys
 write, and its template. If any of those paths are missing from your brief, say so and stop rather
 than guessing.
 
-Your `tools` list withholds Edit and Write for a reason: this stage is read-only. Use Bash only for
-read-only commands.
+Your `tools` list withholds Edit for a reason: this stage is read-only on the codebase. Write is
+included solely so you can produce `analysis.md` at the path in your brief — never use it on
+anything else. Use Bash only for read-only commands.
 
 `model: sonnet` matches this stage's moderate reasoning demand. It is deliberately not `haiku`:
 recognising that a utility *already solves* the task is the one genuinely hard judgement here, and

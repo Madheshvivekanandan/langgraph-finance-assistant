@@ -2,8 +2,10 @@
 
 **Reads:** `profile.md`, `task.md`, and — when the tier produced them — `analysis.md`, `plan.md`
 **Writes:** `implementation.md` (template: `templates/implementation.md`) plus the code changes
-**Restrictions:** none. This is the only stage that may modify source code (the debug stage
-inherits the same permission).
+**Restrictions:** may modify source code freely (the debug stage inherits the same permission) —
+but the development environment is not scratch space. Databases, running services, and seeded data
+are real project state: remove any state you create for a manual check, restore anything you
+rebuilt or restarted, and record every environment side effect under Evidence.
 **Reasoning demand:** moderate. With a good plan and named exemplars, most of the difficulty has
 already been removed upstream.
 
@@ -26,19 +28,6 @@ the project's test command from `profile.md`). Fix what it surfaces.
 
 Evidence means actual command output, not a claim that it passed. The verify stage will run the
 same check independently, so a claim you cannot back will simply become a FAIL one stage later.
-
-
-## The environment is not scratch space
-
-You are running on a real machine with real state. Before you touch it:
-
-- The development database holds data someone cares about. Tests have their own; use it. If you
-  must seed rows to check something by hand, delete them afterwards and say in your artifact what
-  you created and removed.
-- Rebuilding or restarting a running stack is a side effect. Do it when the task needs it, and say
-  that you did — a later stage may otherwise judge a stale build and reach the wrong verdict.
-- Leave the working tree the way the next stage expects it: changes in place, nothing committed,
-  nothing pushed.
 
 ## Output
 
