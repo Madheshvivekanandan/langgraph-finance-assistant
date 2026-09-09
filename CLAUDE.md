@@ -10,10 +10,13 @@ Plan and phase status: [docs/PLAN.md](docs/PLAN.md). LangGraph notes: [docs/lang
 
 ```sh
 docker compose up -d --build        # postgres → migrate → backend :8000 → frontend :5173 → pgweb :8081
-cd backend && ruff format . && ruff check . && mypy app && pytest -q
+cd backend && ruff format . && ruff check . && lint-imports && mypy app && pytest -q
 cd frontend && npm run lint && npx tsc -b --noEmit && npm run build
 python scripts/screenshot_ui.py     # layout gate: overflow, clipping, table alignment
 ```
+
+All of the above runs in CI on every push and pull request. `lint-imports` enforces the
+layer table below — ruff and mypy cannot see dependency direction.
 
 Postgres is on host port **5433**, not 5432 — 5432 belongs to another project. Containers reach it
 as `postgres:5432`.

@@ -1,5 +1,7 @@
 # My Finance
 
+[![CI](https://github.com/Madheshvivekanandan/langgraph-finance-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/Madheshvivekanandan/langgraph-finance-assistant/actions/workflows/ci.yml)
+
 Upload monthly bank statements, get them categorized, visualize spending, and chat with an
 agent about your finances. Built to learn **LangGraph** — plan in [docs/PLAN.md](docs/PLAN.md),
 LangGraph notes in [docs/langgraph-reference.md](docs/langgraph-reference.md).
@@ -137,8 +139,16 @@ cd frontend && npm run dev                                    # terminal 2
 
 ```bash
 cd backend
-ruff format . && ruff check . && mypy app && pytest -q
+ruff format . && ruff check . && lint-imports && mypy app && pytest -q
 ```
+
+`lint-imports` enforces the layer boundaries in `CLAUDE.md`. Ruff and mypy cannot see
+dependency direction — a service importing from `app.api` typechecks perfectly and
+inverts the architecture. That exact bug shipped once, so it is a gate now.
+
+Every gate above, plus the frontend gates and the layout check, runs in CI on each
+push and pull request (`.github/workflows/ci.yml`). CI deliberately runs with **no**
+`OPENAI_API_KEY`, so the suite proves the app still works without one.
 
 Tests run against a separate **`myfinance_test`** database, created and migrated
 automatically on first run. They never touch your development data — the

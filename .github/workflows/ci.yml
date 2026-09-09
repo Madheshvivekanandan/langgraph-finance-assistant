@@ -1,0 +1,153 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# A newer push to the same branch makes the older run irrelevant.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # Same major as docker-compose, so CI cannot pass on a version the app
+        # never runs against.
+        image: postgres:17
+        env:
+          POSTGRES_USER: myfinance
+          POSTGRES_PASSWORD: myfinance
+          POSTGRES_DB: myfinance
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U myfinance"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      # The suite reads this, derives `<name>_test`, and creates and migrates
+      # that database itself. It refuses to touch anything not ending in _test.
+      DATABASE_URL: postgresql+psycopg://myfinance:myfinance@localhost:5432/myfinance
+      # OPENAI_API_KEY is deliberately absent. The app must run and the suite
+      # must pass with no key, so its absence here is part of the test.
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          # The floor declared in pyproject, not the newest available: if the
+          # project claims 3.12 works, CI is where that claim is checked.
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install
+        working-directory: backend
+        run: pip install -e '.[dev]'
+
+      - name: Format check
+        working-directory: backend
+        run: ruff format --check .
+
+      - name: Lint
+        working-directory: backend
+        run: ruff check .
+
+      - name: Import boundaries
+        working-directory: backend
+        # Dependency direction, which ruff and mypy cannot see. A service
+        # importing from app.api typechecks perfectly and inverts the layering.
+        run: lint-imports
+
+      - name: Types
+        working-directory: backend
+        run: mypy app
+
+      - name: Tests
+        working-directory: backend
+        run: pytest -q
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # Same major as the frontend Dockerfile.
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Types
+        working-directory: frontend
+        run: npx tsc -b --noEmit
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  layout:
+    name: UI layout
+    runs-on: ubuntu-latest
+    # Runs the real stack in a browser, so it only earns its cost once the
+    # cheaper gates have passed.
+    needs: [backend, frontend]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Configure
+        # Compose needs a .env; no OpenAI key, so the chat panel renders its
+        # unavailable state - which is itself worth screenshotting.
+        run: |
+          cp .env.example .env
+          sed -i 's#localhost:5433#postgres:5432#' .env
+          sed -i 's#^OPENAI_API_KEY=.*#OPENAI_API_KEY=#' .env
+
+      - name: Start the stack
+        run: docker compose up -d --build --wait
+
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Layout gate
+        # Fails on horizontal overflow, clipped text, or a table header that
+        # does not line up with its column. All three have shipped here before.
+        run: python scripts/screenshot_ui.py
+
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose logs --tail 60
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: layout-screenshots
+          path: .screenshots/
+          retention-days: 7

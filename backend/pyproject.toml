@@ -31,6 +31,8 @@ dev = [
     "langgraph-cli[inmem]>=0.4",
     # Drives scripts/screenshot_ui.py - renders the UI and fails on layout defects.
     "playwright>=1.47",
+    # Enforces the layer boundaries in CLAUDE.md; ruff and mypy cannot see them.
+    "import-linter>=2.0",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -62,3 +64,39 @@ testpaths = ["tests"]
 # logger stays at WARNING, logger.info() short-circuits, and a bad `extra` key
 # (e.g. a reserved LogRecord attribute) only ever blows up in production.
 log_level = "INFO"
+
+# Dependency direction, which no formatter or type checker can see. A service
+# importing from `app.api` typechecks perfectly and inverts the architecture -
+# that exact bug shipped once, so it is a gate now rather than a convention.
+[tool.importlinter]
+root_package = "app"
+# Required because a contract below names third-party packages (fastapi,
+# sqlalchemy) as forbidden imports, not just first-party modules.
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Nothing below the API layer imports it"
+type = "forbidden"
+source_modules = [
+    "app.services",
+    "app.graphs",
+    "app.repositories",
+    "app.clients",
+    "app.models",
+    "app.db",
+    "app.domain",
+    "app.utils",
+]
+forbidden_modules = ["app.api"]
+
+[[tool.importlinter.contracts]]
+name = "The domain is framework-free"
+type = "forbidden"
+source_modules = ["app.domain", "app.utils"]
+forbidden_modules = ["fastapi", "sqlalchemy", "app.api", "app.services", "app.repositories", "app.db"]
+
+[[tool.importlinter.contracts]]
+name = "Repositories do not depend on services or graphs"
+type = "forbidden"
+source_modules = ["app.repositories"]
+forbidden_modules = ["app.services", "app.graphs"]
