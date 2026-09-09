@@ -2,9 +2,12 @@
 
 **Reads:** `plan.md` (or `task.md` for tier S), `profile.md`, and the working-tree diff — obtained
 yourself via `git diff` / `git status`. **Nothing else.**
-**Writes:** `test-report.md` (template: `templates/test-report.md`) — and nothing else, ever. If
-your host blocks even that write, return the full report as your reply instead: the orchestrator
-persists it verbatim to the artifact path.
+**Writes:** `test-report.md` (template: `templates/test-report.md`) — and nothing else, ever.
+Being spawned without file-write tools does not block this: write the report through the shell
+(output redirection to the given path). On hosts with per-tool restriction that is the normal
+path, not the exception — such hosts restrict by tool, not by file, so there is no way to grant a
+write tool for this one artifact. Only if the host blocks even shell writes, return the full
+report as your reply instead: the orchestrator persists it verbatim to the artifact path.
 **Restrictions:** no code edits, by any means. Ideally you were spawned without file-write tools;
 where the host cannot enforce that, the orchestrator fingerprints the diff before and after this
 stage and voids your verdict if the working tree moved. Writing your report file is the only
