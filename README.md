@@ -145,6 +145,19 @@ automatically on first run. They never touch your development data — the
 integration fixtures refuse to truncate any database whose name does not end in
 `_test`.
 
+## Checking the UI
+
+A palette validator checks colour, not geometry, so the layout gets rendered and
+inspected instead of eyeballed:
+
+```bash
+playwright install chromium     # once
+python scripts/screenshot_ui.py # app must be running
+```
+
+It screenshots mobile, tablet, and desktop (light and dark) into `.screenshots/`,
+and exits non-zero if the page scrolls horizontally or any label is clipped.
+
 ## Layout
 
 ```

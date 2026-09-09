@@ -68,7 +68,7 @@ export function TransactionTable({
           <tbody>
             {transactions.map((transaction) => (
               <tr key={transaction.id}>
-                <td>{formatIsoDate(transaction.transaction_date)}</td>
+                <td className="date-cell">{formatIsoDate(transaction.transaction_date)}</td>
                 <td>{transaction.description}</td>
                 <td>
                   <select

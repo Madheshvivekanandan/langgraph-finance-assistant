@@ -119,6 +119,10 @@ table {
   font-size: 0.925rem;
 }
 
+.date-cell {
+  white-space: nowrap;
+}
+
 th,
 td {
   text-align: left;
@@ -137,6 +141,8 @@ th {
 .numeric {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  /* Keeps the leading sign glued to the amount it belongs to. */
+  white-space: nowrap;
 }
 
 .amount-debit {
@@ -180,6 +186,12 @@ th {
 
 .table-scroll {
   overflow-x: auto;
+}
+
+/* Without a floor the table squeezes to the container and the last columns
+   collapse to one character per line. Below this width it scrolls instead. */
+.table-scroll table {
+  min-width: 34rem;
 }
 
 .category-select {
@@ -243,7 +255,9 @@ th {
 
 .kpi-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  /* 11rem is the width at which a full amount like ₹1,72,500.00 still fits.
+     Below that the tiles stack rather than clip. */
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   gap: 0.75rem;
 }
 
@@ -266,7 +280,7 @@ th {
 
 /* Hero figure: the number is the point, so it gets the size. */
 .stat-value {
-  font-size: 1.5rem;
+  font-size: clamp(1.15rem, 5vw, 1.5rem);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
@@ -340,6 +354,7 @@ th {
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
   text-align: right;
+  white-space: nowrap;
   color: var(--ink-muted);
 }
 
@@ -353,7 +368,9 @@ th {
   width: 100%;
   height: auto;
   display: block;
-  overflow: visible;
+  /* Never `visible`: an axis label reaching past the viewBox would widen the
+     page itself, not just the chart. */
+  overflow: hidden;
 }
 
 .legend {

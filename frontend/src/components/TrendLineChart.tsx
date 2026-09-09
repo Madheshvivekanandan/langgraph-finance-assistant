@@ -118,7 +118,17 @@ export function TrendLineChart({ months }: Props) {
             x={xAt(index)}
             y={VIEW_HEIGHT - 10}
             className="axis-label"
-            textAnchor="middle"
+            // The end labels anchor inward, or half of each sits outside the
+            // viewBox and gets clipped.
+            textAnchor={
+              months.length === 1
+                ? 'middle'
+                : index === 0
+                  ? 'start'
+                  : index === months.length - 1
+                    ? 'end'
+                    : 'middle'
+            }
           >
             {formatMonthLabel(month.month)}
           </text>
