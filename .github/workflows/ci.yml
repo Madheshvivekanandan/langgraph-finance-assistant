@@ -40,9 +40,9 @@ jobs:
       # must pass with no key, so its absence here is part of the test.
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           # The floor declared in pyproject, not the newest available: if the
           # project claims 3.12 works, CI is where that claim is checked.
@@ -81,9 +81,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # Same major as the frontend Dockerfile.
           node-version: '22'
@@ -114,9 +114,9 @@ jobs:
     needs: [backend, frontend]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -145,7 +145,7 @@ jobs:
         if: failure()
         run: docker compose logs --tail 60
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: layout-screenshots
