@@ -24,7 +24,7 @@ export function StatementList({ statements }: Props) {
     <div className="panel">
       <h2>Statements</h2>
       <div className="table-scroll">
-        <table>
+        <table className="statements-table">
         <thead>
           <tr>
             <th scope="col">File</th>

@@ -131,6 +131,19 @@ td {
   vertical-align: top;
 }
 
+/*
+ * Every column here holds short content, so stretching them to fill the table
+ * strands a one-digit count in the middle of a 195px column. Sizing the first
+ * columns to their content and letting the last absorb the slack keeps each
+ * value beside its neighbours. `width: 1%` is the standard way to ask an
+ * auto-layout table for a shrink-to-fit column.
+ */
+.statements-table th:not(:last-child),
+.statements-table td:not(:last-child) {
+  width: 1%;
+  white-space: nowrap;
+}
+
 /* The panel edge already closes the table; a rule under the last row reads as
    a divider before nothing. */
 tbody tr:last-child td {
