@@ -25,6 +25,9 @@ class StatementState(TypedDict, total=False):
     # Produced by the categorization nodes
     rule_categorized_count: int
     llm_categorized_count: int
+    # Produced by review_low_confidence. Pending rows themselves live in the
+    # LangGraph checkpoint, not here - see StatementReviewService.
+    reviewed_count: int
     # Produced by store_transactions
     stored_count: int
     # Set by any node that fails in an expected way; presence routes to record_failure

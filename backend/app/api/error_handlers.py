@@ -16,8 +16,10 @@ from app.domain.exceptions import (
     DuplicateStatementError,
     InvalidMonthError,
     InvalidPageTokenError,
+    StatementNotAwaitingReviewError,
     StatementNotFoundError,
     StatementParseError,
+    StatementReviewUnavailableError,
     TransactionNotFoundError,
 )
 from app.schemas.problem_detail import ProblemDetail
@@ -81,6 +83,24 @@ def register_error_handlers(app: FastAPI) -> None:
             detail=str(exc),
         )
 
+    @app.exception_handler(StatementNotAwaitingReviewError)
+    async def _not_awaiting_review(_: Request, exc: StatementNotAwaitingReviewError) -> Response:
+        return _problem(
+            status=409,
+            code="STATEMENT_NOT_AWAITING_REVIEW",
+            title="Statement is not awaiting review",
+            detail=str(exc),
+        )
+
+    @app.exception_handler(StatementReviewUnavailableError)
+    async def _review_unavailable(_: Request, exc: StatementReviewUnavailableError) -> Response:
+        return _problem(
+            status=409,
+            code="STATEMENT_REVIEW_UNAVAILABLE",
+            title="Statement review row is unavailable",
+            detail=str(exc),
+        )
+
     @app.exception_handler(InvalidMonthError)
     async def _bad_month(_: Request, exc: InvalidMonthError) -> Response:
         return _problem(
@@ -125,6 +145,8 @@ def register_error_handlers(app: FastAPI) -> None:
         _parse_failed,
         _not_found,
         _transaction_not_found,
+        _not_awaiting_review,
+        _review_unavailable,
         _bad_month,
         _bad_token,
         _chat_unavailable,

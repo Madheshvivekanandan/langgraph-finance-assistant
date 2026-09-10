@@ -12,30 +12,34 @@ from psycopg_pool import ConnectionPool
 
 from app.api.error_handlers import register_error_handlers
 from app.api.v1.router import api_v1_router
+from app.clients.category_suggester_factory import build_category_suggester
 from app.clients.chat_model_factory import build_chat_model
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.db.psycopg_dsn import psycopg_dsn
 from app.db.session import get_session_factory
 from app.graphs.chat.graph import build_chat_agent
+from app.graphs.statement.graph import build_statement_graph
 
 # Pool configuration is load-bearing: PostgresSaver requires autocommit and a
 # dict-row factory to behave correctly, and misbehaves at runtime rather than
-# at import time if either is missing.
-_CHAT_POOL_MAX_SIZE = 5
+# at import time if either is missing. Shared by both the chat agent and the
+# statement graph's checkpointers - one pool, two compiled graphs.
+_CHECKPOINTER_POOL_MAX_SIZE = 5
 
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Open the chat checkpointer's connection pool for the app's lifetime.
+    """Open the shared checkpointer connection pool for the app's lifetime.
 
     Not opened at import time (the module-level `graph` in `graphs/chat/graph.py`
-    has no checkpointer) because that would make pytest collection, mypy, and
-    alembic all try to connect to the database.
+    and `graphs/statement/graph.py` compile with no checkpointer) because that
+    would make pytest collection, mypy, and alembic all try to connect to the
+    database.
     """
     pool: ConnectionPool[Connection[dict[str, Any]]] = ConnectionPool(
         conninfo=psycopg_dsn(get_settings().database_url),
-        max_size=_CHAT_POOL_MAX_SIZE,
+        max_size=_CHECKPOINTER_POOL_MAX_SIZE,
         open=False,
         kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
     )
@@ -44,6 +48,9 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
         checkpointer = PostgresSaver(pool)
         app.state.chat_agent = build_chat_agent(
             get_session_factory(), build_chat_model(), checkpointer=checkpointer
+        )
+        app.state.statement_graph = build_statement_graph(
+            get_session_factory(), build_category_suggester(), checkpointer=checkpointer
         )
         yield
     finally:

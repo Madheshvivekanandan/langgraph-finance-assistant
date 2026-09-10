@@ -3,6 +3,7 @@
 import hashlib
 import logging
 
+from langchain_core.runnables import RunnableConfig
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -27,8 +28,12 @@ class CreateStatementNode:
     def __init__(self, session_factory: sessionmaker[Session]) -> None:
         self._session_factory = session_factory
 
-    def __call__(self, state: StatementState) -> dict[str, object]:
+    def __call__(self, state: StatementState, config: RunnableConfig) -> dict[str, object]:
         """Create the statement record and hand its id to the rest of the graph.
+
+        `config` is injected by LangGraph because it is declared here - reading
+        the thread id from it (rather than from state) means a Studio run, which
+        mints its own thread id outside this codebase, still gets it persisted.
 
         Raises:
             DuplicateStatementError: If this exact content was already ingested.
@@ -38,6 +43,7 @@ class CreateStatementNode:
         raw_csv = state["raw_csv"]
         filename = state.get("filename") or _DEFAULT_FILENAME
         file_hash = hashlib.sha256(raw_csv.encode()).hexdigest()
+        thread_id = config.get("configurable", {}).get("thread_id")
 
         try:
             with self._session_factory() as session, session.begin():
@@ -46,6 +52,7 @@ class CreateStatementNode:
                         filename=filename,
                         file_hash=file_hash,
                         status=StatementStatus.PROCESSING.value,
+                        thread_id=thread_id,
                     )
                 )
                 statement_id = statement.id
