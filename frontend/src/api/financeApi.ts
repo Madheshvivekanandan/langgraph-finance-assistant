@@ -2,6 +2,7 @@ import type { CategoryList } from '../interfaces/category'
 import type { ChatStatus } from '../interfaces/chat'
 import type { ProblemDetail } from '../interfaces/problem'
 import type { Statement, StatementList } from '../interfaces/statement'
+import type { StatementReview, StatementReviewDecision } from '../interfaces/statementReview'
 import type { CategorySummaryList, MonthSummaryList } from '../interfaces/summary'
 import type { Transaction, TransactionPage } from '../interfaces/transaction'
 
@@ -101,4 +102,19 @@ export function setTransactionCategory(
 
 export function fetchChatStatus(): Promise<ChatStatus> {
   return request<ChatStatus>('/chat/status')
+}
+
+export function getStatementReview(statementId: number): Promise<StatementReview> {
+  return request<StatementReview>(`/statements/${statementId}/review`)
+}
+
+export function submitStatementReview(
+  statementId: number,
+  decisions: StatementReviewDecision[],
+): Promise<Statement> {
+  return request<Statement>(`/statements/${statementId}/review`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ decisions }),
+  })
 }

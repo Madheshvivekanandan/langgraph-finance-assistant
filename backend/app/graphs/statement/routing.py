@@ -6,7 +6,12 @@ state - that is what keeps the graph's control flow inspectable in Studio.
 
 from typing import Literal
 
+from app.domain.low_confidence_policy import LowConfidencePolicy
 from app.graphs.statement.state import StatementState
+
+# Module-level singleton rather than a call in the default argument (ruff B008),
+# and stateless enough to share safely as a mutable-default-style default.
+_DEFAULT_POLICY = LowConfidencePolicy()
 
 
 def route_after_parse(state: StatementState) -> Literal["normalize_rows", "record_failure"]:
@@ -32,4 +37,22 @@ def route_after_rules(
     transactions = state.get("transactions", [])
     if any(not transaction.is_categorized for transaction in transactions):
         return "categorize_with_llm"
+    return "store_transactions"
+
+
+def route_after_llm(
+    state: StatementState, policy: LowConfidencePolicy = _DEFAULT_POLICY
+) -> Literal["mark_awaiting_review", "store_transactions"]:
+    """Pause for review only when the policy finds something to ask about.
+
+    `policy` defaults to a fresh instance so this stays directly callable in
+    tests as `route_after_llm(state)`, matching every other router in this
+    module. The graph itself binds one shared `LowConfidencePolicy` instance
+    here and into `ReviewLowConfidenceNode` via `functools.partial`, so "low
+    confidence" has a single definition rather than two independently tuned
+    ones.
+    """
+    transactions = state.get("transactions", [])
+    if policy.select(transactions):
+        return "mark_awaiting_review"
     return "store_transactions"

@@ -24,6 +24,9 @@ class Statement(Base):
     period_end: Mapped[date | None] = mapped_column(Date, nullable=True)
     # Populated only when status is FAILED
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # The LangGraph checkpoint thread this run can be resumed against. Null for
+    # any run that never paused, or that was never invoked with a config at all.
+    thread_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

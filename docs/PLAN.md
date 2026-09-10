@@ -71,7 +71,13 @@ Monthly summary (income/expense/net) as KPI tiles, category breakdown as a **bar
 **Deviation from this plan:** uses the **sync** `langgraph.checkpoint.postgres.PostgresSaver`, not `AsyncPostgresSaver`. Every repository, service, and route in this codebase is sync SQLAlchemy; FastAPI already runs `def` routes (and iterates a sync `StreamingResponse` generator) in its threadpool, so a fully sync graph/tools/route never blocks the event loop and avoids introducing a second, half-finished async stack for one feature. Same tables, same semantics — see `.agent-loop/runs/2026-09-09-phase-4-chat-agent/plan.md` (D1) for the full rationale.
 
 ### Phase 5 (optional, later) — Stretch goals
-PDF statement parsing; `interrupt()` human-in-the-loop review of low-confidence categorizations (the classic HITL lesson); embed a live mermaid/React Flow graph view in the frontend; multi-month insights ("recurring subscriptions", anomaly flags).
+
+`interrupt()` human-in-the-loop review of low-confidence categorizations (the classic HITL lesson)  ✅ **done**  *(learn: `interrupt()`/`Command(resume=...)`, resuming a suspended run from a real checkpoint)*
+A model categorization below a confidence threshold (`LowConfidencePolicy`, default 0.75, gated on `categorized_by is LLM` so a no-key run never pauses) now stops the statement pipeline before `store_transactions`: `mark_awaiting_review` sets the status, `review_low_confidence` calls `interrupt()` with the pending rows and applies whatever decisions come back on resume. The upload endpoint stays synchronous 201; a statement can come back `AWAITING_REVIEW` with zero transactions until `GET`/`POST /api/v1/statements/{id}/review` resolves it. **Done when:** an upload with an unsure categorization leaves the statement awaiting review, the pending rows are visible and correctable in the UI, and approving resumes the same run (same `thread_id`) rather than re-ingesting. See `.agent-loop/runs/2026-09-09-hitl-review/plan.md` for the full rationale, including why a statement nobody reviews simply stays `AWAITING_REVIEW` forever (D8) rather than expiring.
+
+**Follow-up, out of scope for this run:** a discard/abandon endpoint for a statement stuck `AWAITING_REVIEW` that nobody wants to finish reviewing — today the only ways out are "review it" or delete the row directly, and `file_hash` being `UNIQUE` means re-uploading the same file will not start a fresh run.
+
+Still open: PDF statement parsing; embed a live mermaid/React Flow graph view in the frontend; multi-month insights ("recurring subscriptions", anomaly flags).
 
 ## Simplicity guardrails
 

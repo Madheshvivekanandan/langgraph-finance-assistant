@@ -1,6 +1,7 @@
 """Use case: take an uploaded statement file and turn it into stored transactions."""
 
 import logging
+from uuid import uuid4
 
 from langgraph.graph.state import CompiledStateGraph
 from sqlalchemy.orm import Session, sessionmaker
@@ -32,18 +33,36 @@ class StatementIngestionService:
     def ingest(self, *, filename: str, content: bytes) -> Statement:
         """Ingest one uploaded statement file.
 
+        Mints a thread id up front and passes it in via `config=`, so the run
+        is resumable if it pauses for review - `statement_id` cannot serve as
+        the thread key because it does not exist until `create_statement` runs
+        *inside* this same invocation. When the graph is compiled with a
+        checkpointer and a node calls `interrupt()`, `invoke()` still returns
+        normally (with an `__interrupt__` key); it does not raise or block, so
+        this method's return path is unaffected either way.
+
         Args:
             filename: Original name of the uploaded file, for display only.
             content: Raw bytes of the file.
 
         Returns:
-            The statement record, with its final status set by the graph.
+            The statement record. Its status is COMPLETED, FAILED, or
+            AWAITING_REVIEW, set by the graph.
 
         Raises:
             DuplicateStatementError: If this exact content was already ingested.
             StatementNotFoundError: If the record disappeared mid-run.
         """
-        result = self._graph.invoke({"raw_csv": self._decode(content), "filename": filename})
+        thread_id = str(uuid4())
+        result = self._graph.invoke(
+            {"raw_csv": self._decode(content), "filename": filename},
+            config={"configurable": {"thread_id": thread_id}},
+        )
+        if "__interrupt__" in result:
+            logger.info(
+                "statement_ingestion_paused_for_review",
+                extra={"statement_id": result["statement_id"], "thread_id": thread_id},
+            )
         statement_id = result["statement_id"]
 
         with self._session_factory() as session:

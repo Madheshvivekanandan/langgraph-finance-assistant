@@ -5,10 +5,17 @@ from typing import Annotated
 
 from fastapi import APIRouter, File, Query, Response, UploadFile, status
 
-from app.api.deps import StatementIngestionServiceDep, StatementQueryServiceDep
+from app.api.deps import (
+    StatementIngestionServiceDep,
+    StatementQueryServiceDep,
+    StatementReviewServiceDep,
+)
+from app.domain.category_decision import CategoryDecision
 from app.domain.exceptions import StatementParseError
 from app.schemas.statement_list_out import StatementListOut
 from app.schemas.statement_out import StatementOut
+from app.schemas.statement_review_decisions_in import StatementReviewDecisionsIn
+from app.schemas.statement_review_out import StatementReviewOut
 
 router = APIRouter(prefix="/statements", tags=["statements"])
 
@@ -36,7 +43,9 @@ def _safe_filename(raw: str | None) -> str:
     summary="Upload a bank statement CSV",
     description=(
         "Parses the file into transactions and stores them. The response carries "
-        "the resulting status: COMPLETED, or FAILED with an error_message."
+        "the resulting status: COMPLETED; FAILED with an error_message; or "
+        "AWAITING_REVIEW, meaning some categorizations need a person's confirmation "
+        "before storing - see GET/POST .../review."
     ),
 )
 def upload_statement(
@@ -82,3 +91,56 @@ def list_statements(
     """
     statements = service.list_recent(limit=min(limit, MAX_STATEMENT_PAGE_SIZE))
     return StatementListOut(items=[StatementOut.model_validate(item) for item in statements])
+
+
+@router.get(
+    "/{statement_id}/review",
+    response_model=StatementReviewOut,
+    summary="Get the rows a paused statement is asking a person to confirm",
+    description=(
+        "404 if the statement does not exist; 409 if it is not currently AWAITING_REVIEW."
+    ),
+)
+def get_statement_review(
+    statement_id: int,
+    service: StatementReviewServiceDep,
+) -> StatementReviewOut:
+    """Return the pending review payload for one statement.
+
+    Raises:
+        StatementNotFoundError: If no such statement exists.
+        StatementNotAwaitingReviewError: If it is not paused for review.
+    """
+    payload = service.get_pending(statement_id)
+    return StatementReviewOut.model_validate(payload)
+
+
+@router.post(
+    "/{statement_id}/review",
+    response_model=StatementOut,
+    summary="Submit review decisions and resume a paused statement",
+    description=(
+        "Applies any corrections, approves the rest as suggested, and resumes the "
+        "same run. Not idempotent by replacement (hence POST, not PUT): a second "
+        "submission finds the statement already COMPLETED and gets 409."
+    ),
+)
+def submit_statement_review(
+    statement_id: int,
+    body: StatementReviewDecisionsIn,
+    service: StatementReviewServiceDep,
+) -> StatementOut:
+    """Resolve a statement's pending review and resume its run.
+
+    Raises:
+        StatementNotFoundError: If no such statement exists.
+        StatementNotAwaitingReviewError: If it is not paused for review (this is
+            what makes a second submission safe: it 409s instead of resuming twice).
+        StatementReviewUnavailableError: If a decision names a row that is not
+            actually pending.
+    """
+    decisions = [
+        CategoryDecision(index=item.index, category=item.category) for item in body.decisions
+    ]
+    statement = service.submit(statement_id, decisions)
+    return StatementOut.model_validate(statement)

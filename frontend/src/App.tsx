@@ -3,6 +3,7 @@ import { ChatPanel } from './components/ChatPanel'
 import { Dashboard } from './components/Dashboard'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { StatementList } from './components/StatementList'
+import { StatementReviewPanel } from './components/StatementReviewPanel'
 import { StatementUpload } from './components/StatementUpload'
 import { TransactionTable } from './components/TransactionTable'
 import { useFinanceData } from './hooks/useFinanceData'
@@ -27,6 +28,8 @@ function App() {
     loadMore,
     reload,
   } = useFinanceData()
+
+  const awaitingReview = statements.find((statement) => statement.status === 'AWAITING_REVIEW')
 
   return (
     <main className="app">
@@ -66,6 +69,14 @@ function App() {
               onLoadMore={() => void loadMore()}
               onCategoryChange={(id, category) => void updateCategory(id, category)}
             />
+            {awaitingReview && (
+              <StatementReviewPanel
+                statementId={awaitingReview.id}
+                filename={awaitingReview.filename}
+                categories={categories}
+                onResolved={() => void reload()}
+              />
+            )}
             <StatementList statements={statements} />
           </>
         )}

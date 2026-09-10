@@ -5,18 +5,28 @@ from typing import Annotated
 from fastapi import Depends, Request
 
 from app.db.session import get_session_factory
-from app.graphs.statement.graph import graph as statement_graph
 from app.services.chat_service import ChatService
 from app.services.statement_ingestion_service import StatementIngestionService
 from app.services.statement_query_service import StatementQueryService
+from app.services.statement_review_service import StatementReviewService
 from app.services.summary_service import SummaryService
 from app.services.transaction_category_service import TransactionCategoryService
 from app.services.transaction_query_service import TransactionQueryService
 
 
-def get_statement_ingestion_service() -> StatementIngestionService:
-    """Build the ingestion service around the shared graph and session factory."""
-    return StatementIngestionService(get_session_factory(), statement_graph)
+def get_statement_ingestion_service(request: Request) -> StatementIngestionService:
+    """Build the ingestion service around the checkpointed graph the lifespan built.
+
+    Read from `request.app.state` rather than the module-level `graph` (which
+    has no checkpointer - see `graphs/statement/graph.py`), so a paused run can
+    actually be resumed later.
+    """
+    return StatementIngestionService(get_session_factory(), request.app.state.statement_graph)
+
+
+def get_statement_review_service(request: Request) -> StatementReviewService:
+    """Build the review service around the same checkpointed graph."""
+    return StatementReviewService(get_session_factory(), request.app.state.statement_graph)
 
 
 def get_statement_query_service() -> StatementQueryService:
@@ -53,6 +63,7 @@ StatementIngestionServiceDep = Annotated[
     StatementIngestionService, Depends(get_statement_ingestion_service)
 ]
 StatementQueryServiceDep = Annotated[StatementQueryService, Depends(get_statement_query_service)]
+StatementReviewServiceDep = Annotated[StatementReviewService, Depends(get_statement_review_service)]
 SummaryServiceDep = Annotated[SummaryService, Depends(get_summary_service)]
 TransactionCategoryServiceDep = Annotated[
     TransactionCategoryService, Depends(get_transaction_category_service)

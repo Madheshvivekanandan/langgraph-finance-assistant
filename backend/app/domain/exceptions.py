@@ -43,6 +43,23 @@ class TransactionNotFoundError(DomainError):
         self.transaction_id = transaction_id
 
 
+class StatementNotAwaitingReviewError(DomainError):
+    """The statement is not currently paused for human review."""
+
+    def __init__(self, statement_id: int) -> None:
+        super().__init__(f"statement {statement_id} is not awaiting review")
+        self.statement_id = statement_id
+
+
+class StatementReviewUnavailableError(DomainError):
+    """A review decision referenced a row that is not pending review."""
+
+    def __init__(self, statement_id: int, index: int) -> None:
+        super().__init__(f"statement {statement_id} has no pending row at index {index}")
+        self.statement_id = statement_id
+        self.index = index
+
+
 class InvalidMonthError(DomainError):
     """A month filter was not a usable 'YYYY-MM' value."""
 

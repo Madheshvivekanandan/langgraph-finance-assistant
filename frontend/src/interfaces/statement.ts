@@ -1,4 +1,4 @@
-export type StatementStatus = 'PROCESSING' | 'COMPLETED' | 'FAILED'
+export type StatementStatus = 'PROCESSING' | 'AWAITING_REVIEW' | 'COMPLETED' | 'FAILED'
 
 export interface Statement {
   id: number
