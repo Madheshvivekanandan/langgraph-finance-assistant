@@ -77,7 +77,18 @@ A model categorization below a confidence threshold (`LowConfidencePolicy`, defa
 
 **Follow-up, out of scope for this run:** a discard/abandon endpoint for a statement stuck `AWAITING_REVIEW` that nobody wants to finish reviewing — today the only ways out are "review it" or delete the row directly, and `file_hash` being `UNIQUE` means re-uploading the same file will not start a fresh run.
 
-Still open: PDF statement parsing; embed a live mermaid/React Flow graph view in the frontend; multi-month insights ("recurring subscriptions", anomaly flags).
+Embed a live graph view in the frontend  ✅ **done**  *(learn: `get_graph()` introspection — the compiled graph knows its own topology)*
+`GET /api/v1/graphs/{name}` introspects the live compiled graph per request (never a checked-in
+copy, which would silently drift) and serves structured nodes/edges plus LangGraph's own
+`draw_mermaid()` text; a Pipeline view renders it client-side with mermaid, re-themed to the app's
+tokens because `draw_mermaid()` bakes light `classDef` fills into the source. Shipped alongside a
+frontend rebuild: sidebar shell, five routes (Overview / Transactions / Statements / Review /
+Pipeline), chat docked as a rail that survives navigation, and the screenshot gate extended from
+4 to 24 states including a mermaid contrast assertion.
+
+Still open: PDF statement parsing; multi-month insights ("recurring subscriptions", anomaly flags);
+a discard endpoint for a statement stuck AWAITING_REVIEW (one exists in the dev DB right now: a
+Studio-resumed run completes in Studio's own checkpoint store, so the app's row stays paused forever).
 
 ## Simplicity guardrails
 
