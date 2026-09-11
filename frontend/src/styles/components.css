@@ -1,0 +1,801 @@
+/*
+ * Reusable primitives: cards, tables, chart internals, stat tiles, badges,
+ * buttons, chips, skeletons, chat bubbles/composer. Moved out of the old
+ * monolithic App.css (D6) — logic and class names unchanged.
+ */
+
+/* ---------- cards ---------- */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 480px) {
+  .panel {
+    padding: var(--space-4);
+  }
+}
+
+.panel-error {
+  border-color: var(--debit);
+}
+
+/* A paused-for-review statement is interruptive but not a failure - amber,
+   not the red `.panel-error` uses, so the two states stay distinguishable. */
+.panel-review {
+  border-left: 3px solid var(--warning);
+}
+
+/* ---------- buttons ---------- */
+
+button {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 1rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---------- upload dropzone ---------- */
+
+.upload-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+  border: 2px dashed var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8) var(--space-4);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.dropzone:hover,
+.dropzone:focus-within {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+
+/* ---------- tables ---------- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.date-cell {
+  white-space: nowrap;
+}
+
+/* th and td share identical horizontal padding, or the layout gate's header/
+   cell alignment check fails - only the vertical rhythm differs by row type. */
+th,
+td {
+  text-align: left;
+  padding: var(--row-pad-y) var(--row-pad-x);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+/* Only the file name and period need to hold a line; the rest are short. */
+.statements-table th,
+.statements-table td {
+  white-space: nowrap;
+}
+
+/* The panel edge already closes the table; a rule under the last row reads as
+   a divider before nothing. */
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-subtle);
+  z-index: 1;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+  font-weight: var(--weight-medium);
+}
+
+.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  /* Keeps the leading sign glued to the amount it belongs to. */
+  white-space: nowrap;
+}
+
+.amount-debit {
+  color: var(--debit);
+}
+
+.amount-credit {
+  color: var(--credit);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  border: 1px solid currentColor;
+}
+
+.badge-completed {
+  color: var(--credit);
+}
+
+.badge-failed {
+  color: var(--debit);
+}
+
+.badge-processing {
+  color: var(--ink-muted);
+}
+
+/* Amber, not red: a paused-for-review statement is an attention state, not a
+   loss - red stays reserved for real failure (D5, D7). */
+.badge-awaiting_review {
+  color: var(--warning);
+}
+
+/* Sidebar review-count badge — number as text, never a bare dot (D2). */
+.badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-selected);
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+/* Without a floor the table squeezes to the container and the last columns
+   collapse to one character per line. Below this width it scrolls instead. */
+.table-scroll table {
+  min-width: 34rem;
+}
+
+.category-select {
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: 0.15rem 0.3rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink);
+  max-width: 11rem;
+}
+
+.category-select:disabled {
+  opacity: 0.55;
+}
+
+/* Identity dot for a transaction's category: recognition aid only, always
+   beside its own text label, so it carries no unique meaning on its own
+   (aria-hidden in markup). Colour comes from the data attribute, not a JS map. */
+.category-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 0.4rem;
+  border-radius: var(--radius-full);
+  background: var(--cat-uncategorized);
+}
+
+td[data-category='GROCERIES'] .category-dot { background: var(--cat-groceries); }
+td[data-category='DINING'] .category-dot { background: var(--cat-dining); }
+td[data-category='TRANSPORT'] .category-dot { background: var(--cat-transport); }
+td[data-category='HOUSING'] .category-dot { background: var(--cat-housing); }
+td[data-category='UTILITIES'] .category-dot { background: var(--cat-utilities); }
+td[data-category='SHOPPING'] .category-dot { background: var(--cat-shopping); }
+td[data-category='ENTERTAINMENT'] .category-dot { background: var(--cat-entertainment); }
+td[data-category='SUBSCRIPTIONS'] .category-dot { background: var(--cat-subscriptions); }
+td[data-category='HEALTH'] .category-dot { background: var(--cat-health); }
+td[data-category='EDUCATION'] .category-dot { background: var(--cat-education); }
+td[data-category='INVESTMENTS'] .category-dot { background: var(--cat-investments); }
+td[data-category='TRANSFERS'] .category-dot { background: var(--cat-transfers); }
+td[data-category='CASH'] .category-dot { background: var(--cat-cash); }
+td[data-category='FEES'] .category-dot { background: var(--cat-fees); }
+td[data-category='INCOME'] .category-dot { background: var(--cat-income); }
+td[data-category='OTHER'] .category-dot { background: var(--cat-other); }
+td[data-category='UNCATEGORIZED'] .category-dot { background: var(--cat-uncategorized); }
+
+/* The legend that explains the dashed outline below. Without it the border is
+   a signal nobody can read - it was a hover-only tooltip before. */
+.table-legend {
+  display: flex;
+  /* Top, not centre: the chip should sit with the first line when the sentence
+     wraps to two. */
+  align-items: flex-start;
+  gap: 0.5rem;
+  line-height: 1.45;
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.legend-chip {
+  flex: none;
+  width: 1.6rem;
+  height: 1rem;
+  margin-top: 0.15rem;
+  border-radius: 5px;
+  border: 1px dashed var(--accent);
+}
+
+/* A model guess is provisional until a person confirms or changes it. */
+.category-select.source-llm {
+  border-style: dashed;
+  border-color: var(--accent);
+}
+
+/* An unassigned category is an attention state, not a loss (D7). */
+.category-select.source-none {
+  border-color: var(--warning);
+}
+
+/* ---------- filters ---------- */
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.filter-row label {
+  margin: 0;
+}
+
+.filter-row select {
+  font: inherit;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.chip-clear {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--series-1);
+  border-radius: var(--radius-full);
+  padding: 0.2rem 0.7rem;
+  font-size: var(--text-sm);
+}
+
+/* ---------- KPI tiles ---------- */
+
+.kpi-row {
+  display: grid;
+  /* 11rem is the width at which a full amount like ₹1,72,500.00 still fits.
+     Below that the tiles stack rather than clip. Do not lower this floor. */
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+
+.stat-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+}
+
+/* Hero figure: the number is the point, so it gets the size. Clamp stays -
+   it is what stops this clipping inside an 11rem tile at 390px; only the
+   ceiling moved up (D4). */
+.stat-value {
+  font-size: clamp(1.15rem, 5vw, 1.625rem);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink);
+}
+
+.stat-detail {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+/* Sign and the detail word carry the meaning; colour only reinforces it. */
+.stat-positive {
+  color: var(--credit);
+}
+
+.stat-negative {
+  color: var(--debit);
+}
+
+/* ---------- category bars ---------- */
+
+.bar-chart {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  /* The Overview grid's 5-of-12-column panel (D2), further squeezed when the
+     chat rail is docked open beside it, can be narrower than a 3-column bar
+     row can hold without clipping the longest category label. Queried by
+     the chart's own box, not the viewport — this is a component-width
+     problem, not a screen-width one. */
+  container-type: inline-size;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 8rem) 1fr minmax(5.5rem, auto);
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.35rem;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.bar-row:hover {
+  background: var(--bg-hover);
+}
+
+.bar-row-selected {
+  background: var(--bg-selected);
+}
+
+.bar-label {
+  display: flex;
+  align-items: center;
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
+/* Identity swatch tying a bar to the same category's dot in the table below -
+   a recognition aid beside its own text label, so it is aria-hidden (D7). */
+.bar-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-right: 0.4rem;
+  border-radius: var(--radius-full);
+  background: var(--cat-uncategorized);
+}
+
+.bar-label .bar-dot[data-category='GROCERIES'] { background: var(--cat-groceries); }
+.bar-label .bar-dot[data-category='DINING'] { background: var(--cat-dining); }
+.bar-label .bar-dot[data-category='TRANSPORT'] { background: var(--cat-transport); }
+.bar-label .bar-dot[data-category='HOUSING'] { background: var(--cat-housing); }
+.bar-label .bar-dot[data-category='UTILITIES'] { background: var(--cat-utilities); }
+.bar-label .bar-dot[data-category='SHOPPING'] { background: var(--cat-shopping); }
+.bar-label .bar-dot[data-category='ENTERTAINMENT'] { background: var(--cat-entertainment); }
+.bar-label .bar-dot[data-category='SUBSCRIPTIONS'] { background: var(--cat-subscriptions); }
+.bar-label .bar-dot[data-category='HEALTH'] { background: var(--cat-health); }
+.bar-label .bar-dot[data-category='EDUCATION'] { background: var(--cat-education); }
+.bar-label .bar-dot[data-category='INVESTMENTS'] { background: var(--cat-investments); }
+.bar-label .bar-dot[data-category='TRANSFERS'] { background: var(--cat-transfers); }
+.bar-label .bar-dot[data-category='CASH'] { background: var(--cat-cash); }
+.bar-label .bar-dot[data-category='FEES'] { background: var(--cat-fees); }
+.bar-label .bar-dot[data-category='INCOME'] { background: var(--cat-income); }
+.bar-label .bar-dot[data-category='OTHER'] { background: var(--cat-other); }
+
+.bar-track {
+  display: block;
+  height: 10px;
+  background: color-mix(in srgb, var(--grid) 60%, transparent);
+  border-radius: 0 4px 4px 0;
+}
+
+/* Thin mark, 4px rounded data-end, anchored to the baseline at the left. */
+.bar-fill {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  background: var(--series-1);
+  border-radius: 0 4px 4px 0;
+}
+
+.bar-value {
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--ink-muted);
+}
+
+/* Below this the 3-column row has no width left to give the label without
+   clipping it — stack the track+value under the label instead. */
+@container (max-width: 17rem) {
+  .bar-row {
+    grid-template-columns: 1fr minmax(4rem, auto);
+    grid-template-areas: 'label label' 'track value';
+    row-gap: 0.2rem;
+  }
+
+  .bar-label {
+    grid-area: label;
+  }
+
+  .bar-track {
+    grid-area: track;
+  }
+
+  .bar-value {
+    grid-area: value;
+  }
+}
+
+/* ---------- trend chart ---------- */
+
+.chart-frame {
+  position: relative;
+}
+
+.trend-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+  /* Never `visible`: an axis label reaching past the viewBox would widen the
+     page itself, not just the chart. */
+  overflow: hidden;
+}
+
+.legend {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* A border, not a filled block, so the income swatch can mirror the line's
+   own dash pattern - the redundant channel, not colour alone (D7). */
+.legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 0;
+  border-top: 3px solid;
+  border-radius: 2px;
+}
+
+.swatch-income {
+  border-top-color: var(--series-income);
+  border-top-style: dashed;
+}
+
+.swatch-expense {
+  border-top-color: var(--series-expense);
+}
+
+/* Recessive chrome: the data should be the most prominent thing here. */
+.grid-line {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+}
+
+.crosshair {
+  stroke: var(--chart-axis);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.axis-label {
+  fill: var(--chart-muted);
+  font-size: 12px;
+}
+
+.series-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.line-income {
+  stroke: var(--series-income);
+  /* Redundant channel for the two series, not colour alone (D7). */
+  stroke-dasharray: 5 4;
+}
+
+.line-expense {
+  stroke: var(--series-expense);
+}
+
+/* 2px surface ring so overlapping dots stay separable. */
+.series-dot {
+  stroke: var(--chart-surface);
+  stroke-width: 2;
+}
+
+.dot-income {
+  fill: var(--series-1);
+}
+
+.dot-expense {
+  fill: var(--series-2);
+}
+
+/* ---------- tooltips ---------- */
+
+/* The one floating layer that keeps a shadow: a tooltip has no border to
+   contain it against, so it needs elevation the borders-only rest of the UI
+   doesn't. */
+.chart-tooltip {
+  position: absolute;
+  z-index: 2;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.6rem;
+  font-size: var(--text-sm);
+  color: var(--ink);
+  pointer-events: none;
+  box-shadow: var(--shadow-overlay);
+  white-space: nowrap;
+}
+
+.trend-tooltip {
+  top: 1.5rem;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.bar-tooltip {
+  left: 50%;
+  transform: translateX(-50%) translateY(-0.4rem);
+}
+
+/* ---------- chat ---------- */
+
+/* The rail's interior is a full-height column: the header and the composer
+   keep their natural height and the thread takes everything left over (M5).
+   Without it the panel laid out at its content height inside a much taller
+   rail, stranding the composer under the header above ~370px of empty sheet. */
+.chat-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  /* Or the column refuses to shrink below its content and the thread's own
+     overflow never engages. */
+  min-height: 0;
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface);
+}
+
+.chat-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  /* The heading and both controls must never push the sheet sideways at
+     390px, where the rail is the full viewport width. */
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chat-header h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chat-new-button,
+.chat-close-button {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  padding: 0.3rem 0.75rem;
+  font-size: var(--text-sm);
+  /* 44px minimum touch target (M5 a11y), same floor the composer states. */
+  min-height: 2.75rem;
+}
+
+.chat-close-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  padding: 0;
+}
+
+.chat-messages {
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Scrolling the thread must not also scroll the page underneath it. */
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Centred inside the empty thread rather than stacked under the header, so
+   the flexing list still pushes the composer down to the bottom edge. */
+.chat-empty {
+  margin: auto;
+  max-width: 22rem;
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  max-width: min(34rem, 90%);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+}
+
+.chat-message-user {
+  align-self: flex-end;
+  background: var(--bg-selected);
+  border: none;
+  /* The corner nearest the speaker tightens - the cheap trick that makes a
+     bubble read as intentional rather than a generic rounded box. */
+  border-bottom-right-radius: var(--radius-xs);
+}
+
+.chat-message-assistant {
+  align-self: flex-start;
+  border-bottom-left-radius: var(--radius-xs);
+}
+
+.chat-message-role {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--ink-muted);
+}
+
+.chat-message-content {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: var(--text-sm);
+}
+
+/* Last child of the column and never flexing: it sits on the rail's bottom
+   edge because the thread above it absorbs the slack, not because of any
+   absolute positioning. */
+.chat-composer {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+  /* The overlay sheet runs to the physical bottom edge; keep the send button
+     clear of the iOS home indicator. */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.chat-composer label {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.chat-composer-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-composer-row input {
+  flex: 1;
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  /* 44px minimum target (D3/D5 a11y): row padding + line-height clears this,
+     but state it explicitly so it never regresses under the composer's own
+     tightened chat-panel spacing. */
+  min-height: 2.75rem;
+}
+
+.chat-composer-row button {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
+
+/* ---------- skeletons ---------- */
+
+.skeleton {
+  display: block;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    opacity: 0.8;
+  }
+}

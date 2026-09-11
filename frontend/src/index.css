@@ -1,5 +1,5 @@
 /*
- * Global resets only. Everything visual lives in App.css.
+ * Global resets only. Everything visual lives in styles/*.css (see main.tsx).
  *
  * This replaces Vite's starter stylesheet, which set `#root { width: 1126px;
  * display: flex; text-align: center }` and a 56px h1 — that fixed width was

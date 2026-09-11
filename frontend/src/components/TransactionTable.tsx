@@ -1,6 +1,7 @@
 import type { Category } from '../interfaces/category'
 import type { Transaction } from '../interfaces/transaction'
 import { formatAmountInr, formatIsoDate } from '../utils/formatters'
+import { EmptyState } from './EmptyState'
 
 interface Props {
   transactions: Transaction[]
@@ -41,12 +42,9 @@ export function TransactionTable({
 }: Props) {
   if (transactions.length === 0) {
     return (
-      <div className="panel">
-        <h2>Transactions</h2>
-        <p className="message">
-          Nothing here yet. Upload a statement and its transactions appear here.
-        </p>
-      </div>
+      <EmptyState title="No transactions yet">
+        Upload a statement and its transactions appear here.
+      </EmptyState>
     )
   }
 
@@ -54,8 +52,7 @@ export function TransactionTable({
   const hasModelGuesses = transactions.some((item) => item.categorized_by === 'LLM')
 
   return (
-    <div className="panel">
-      <h2>Transactions</h2>
+    <div className="panel transactions-panel">
       {hasModelGuesses && (
         <p className="table-legend">
           <span className="legend-chip" aria-hidden="true" />
@@ -85,9 +82,12 @@ export function TransactionTable({
               <tr key={transaction.id}>
                 <td className="date-cell">{formatIsoDate(transaction.transaction_date)}</td>
                 <td>{transaction.description}</td>
-                <td>
+                <td data-category={transaction.category}>
+                  <span className="category-dot" aria-hidden="true" />
                   <select
-                    aria-label={`Category for ${transaction.description}`}
+                    aria-label={`Category for ${transaction.description} — ${sourceHint(
+                      transaction,
+                    )}`}
                     title={sourceHint(transaction)}
                     className={`category-select source-${transaction.categorized_by.toLowerCase()}`}
                     value={transaction.category}

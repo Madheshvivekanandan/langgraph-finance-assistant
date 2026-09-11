@@ -37,8 +37,11 @@ export function StatementReviewPanel({ statementId, filename, categories, onReso
   if (!review) return null
 
   return (
-    <div className="panel">
-      <h2>Review needed — {filename}</h2>
+    <div className="panel panel-review">
+      <h2>
+        Review needed — {filename}{' '}
+        <span className="badge badge-awaiting_review">{review.items.length} to review</span>
+      </h2>
       <p className="message">
         The model was unsure about {review.items.length} row
         {review.items.length === 1 ? '' : 's'}. Confirm or correct each, then approve to finish

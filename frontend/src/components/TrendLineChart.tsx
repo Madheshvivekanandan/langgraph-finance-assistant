@@ -112,27 +112,34 @@ export function TrendLineChart({ months }: Props) {
           )
         })}
 
-        {months.map((month, index) => (
-          <text
-            key={month.month}
-            x={xAt(index)}
-            y={VIEW_HEIGHT - 10}
-            className="axis-label"
-            // The end labels anchor inward, or half of each sits outside the
-            // viewBox and gets clipped.
-            textAnchor={
-              months.length === 1
-                ? 'middle'
-                : index === 0
-                  ? 'start'
-                  : index === months.length - 1
-                    ? 'end'
-                    : 'middle'
-            }
-          >
-            {formatMonthLabel(month.month)}
-          </text>
-        ))}
+        {months.map((month, index) => {
+          // Past 6 months the labels start to crowd; keep every other one
+          // (always keeping the last) rather than letting them overlap.
+          const isSkippable =
+            months.length > 6 && index !== months.length - 1 && index % 2 !== 0
+          if (isSkippable) return null
+          return (
+            <text
+              key={month.month}
+              x={xAt(index)}
+              y={VIEW_HEIGHT - 10}
+              className="axis-label"
+              // The end labels anchor inward, or half of each sits outside the
+              // viewBox and gets clipped.
+              textAnchor={
+                months.length === 1
+                  ? 'middle'
+                  : index === 0
+                    ? 'start'
+                    : index === months.length - 1
+                      ? 'end'
+                      : 'middle'
+              }
+            >
+              {formatMonthLabel(month.month)}
+            </text>
+          )
+        })}
 
         {hovered !== null && (
           <line

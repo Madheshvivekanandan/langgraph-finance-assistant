@@ -1,5 +1,6 @@
 import type { CategoryList } from '../interfaces/category'
 import type { ChatStatus } from '../interfaces/chat'
+import type { GraphTopology } from '../interfaces/graphTopology'
 import type { ProblemDetail } from '../interfaces/problem'
 import type { Statement, StatementList } from '../interfaces/statement'
 import type { StatementReview, StatementReviewDecision } from '../interfaces/statementReview'
@@ -102,6 +103,10 @@ export function setTransactionCategory(
 
 export function fetchChatStatus(): Promise<ChatStatus> {
   return request<ChatStatus>('/chat/status')
+}
+
+export function fetchGraphTopology(name: string): Promise<GraphTopology> {
+  return request<GraphTopology>(`/graphs/${name}`)
 }
 
 export function getStatementReview(statementId: number): Promise<StatementReview> {
