@@ -1,5 +1,6 @@
 import type { CategoryList } from '../interfaces/category'
 import type { ChatStatus } from '../interfaces/chat'
+import type { GraphTopology } from '../interfaces/graphTopology'
 import type { ProblemDetail } from '../interfaces/problem'
 import type { Statement, StatementList } from '../interfaces/statement'
 import type { StatementReview, StatementReviewDecision } from '../interfaces/statementReview'
@@ -44,6 +45,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   })
   if (!response.ok) throw await toApiError(response)
+  // A 204 (e.g. DELETE) has no body; response.json() would throw on it.
+  if (response.status === 204) return undefined as T
   return (await response.json()) as T
 }
 
@@ -104,6 +107,10 @@ export function fetchChatStatus(): Promise<ChatStatus> {
   return request<ChatStatus>('/chat/status')
 }
 
+export function fetchGraphTopology(name: string): Promise<GraphTopology> {
+  return request<GraphTopology>(`/graphs/${name}`)
+}
+
 export function getStatementReview(statementId: number): Promise<StatementReview> {
   return request<StatementReview>(`/statements/${statementId}/review`)
 }
@@ -117,4 +124,8 @@ export function submitStatementReview(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ decisions }),
   })
+}
+
+export function discardStatement(statementId: number): Promise<void> {
+  return request<void>(`/statements/${statementId}`, { method: 'DELETE' })
 }

@@ -44,7 +44,10 @@ export function CategoryBarChart({ items, total, onSelect, selectedCategory }: P
               onBlur={() => setHovered(null)}
               aria-pressed={isSelected}
             >
-              <span className="bar-label">{item.label}</span>
+              <span className="bar-label">
+                <span className="bar-dot" data-category={item.category} aria-hidden="true" />
+                {item.label}
+              </span>
               <span className="bar-track">
                 <span
                   className="bar-fill"

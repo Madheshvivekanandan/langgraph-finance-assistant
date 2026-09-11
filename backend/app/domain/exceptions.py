@@ -70,3 +70,11 @@ class InvalidPageTokenError(DomainError):
 
 class ChatUnavailableError(DomainError):
     """The chat agent has no model configured (no OPENAI_API_KEY)."""
+
+
+class GraphNotFoundError(DomainError):
+    """No graph is registered under the requested name."""
+
+    def __init__(self, graph_name: str) -> None:
+        super().__init__(f"graph {graph_name!r} not found")
+        self.graph_name = graph_name

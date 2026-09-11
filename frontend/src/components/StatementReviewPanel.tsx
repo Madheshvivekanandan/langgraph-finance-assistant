@@ -9,9 +9,15 @@ interface Props {
   onResolved: () => void
 }
 
+function confirmDiscard(): boolean {
+  return window.confirm(
+    'Discard this statement? This permanently deletes it and cannot be undone.',
+  )
+}
+
 /** Renders only for a statement paused AWAITING_REVIEW; approving resumes its run. */
 export function StatementReviewPanel({ statementId, filename, categories, onResolved }: Props) {
-  const { review, choices, setChoice, submit, status, errorMessage, isSubmitting } =
+  const { review, choices, setChoice, submit, discard, status, errorMessage, isSubmitting } =
     useStatementReview(statementId, onResolved)
 
   if (status === 'loading') {
@@ -30,6 +36,13 @@ export function StatementReviewPanel({ statementId, filename, categories, onReso
         <p className="message message-error" role="alert">
           {errorMessage}
         </p>
+        <button
+          type="button"
+          onClick={() => confirmDiscard() && void discard()}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Discarding…' : 'Discard'}
+        </button>
       </div>
     )
   }
@@ -37,8 +50,11 @@ export function StatementReviewPanel({ statementId, filename, categories, onReso
   if (!review) return null
 
   return (
-    <div className="panel">
-      <h2>Review needed — {filename}</h2>
+    <div className="panel panel-review">
+      <h2>
+        Review needed — {filename}{' '}
+        <span className="badge badge-awaiting_review">{review.items.length} to review</span>
+      </h2>
       <p className="message">
         The model was unsure about {review.items.length} row
         {review.items.length === 1 ? '' : 's'}. Confirm or correct each, then approve to finish
@@ -92,9 +108,18 @@ export function StatementReviewPanel({ statementId, filename, categories, onReso
           </tbody>
         </table>
       </div>
-      <button type="button" onClick={() => void submit()} disabled={isSubmitting}>
-        {isSubmitting ? 'Submitting…' : 'Approve'}
-      </button>
+      <div className="panel-review-actions">
+        <button type="button" onClick={() => void submit()} disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting…' : 'Approve'}
+        </button>
+        <button
+          type="button"
+          onClick={() => confirmDiscard() && void discard()}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Discarding…' : 'Discard'}
+        </button>
+      </div>
     </div>
   )
 }

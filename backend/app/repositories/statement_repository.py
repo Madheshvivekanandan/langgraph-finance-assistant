@@ -38,3 +38,7 @@ class StatementRepository:
                 select(Statement).order_by(Statement.id.desc()).limit(limit)
             ).scalars()
         )
+
+    def delete(self, statement: Statement) -> None:
+        """Stage a statement row for deletion; the caller flushes/commits."""
+        self._session.delete(statement)

@@ -14,6 +14,7 @@ from app.domain.exceptions import (
     AppError,
     ChatUnavailableError,
     DuplicateStatementError,
+    GraphNotFoundError,
     InvalidMonthError,
     InvalidPageTokenError,
     StatementNotAwaitingReviewError,
@@ -128,6 +129,15 @@ def register_error_handlers(app: FastAPI) -> None:
             detail=str(exc),
         )
 
+    @app.exception_handler(GraphNotFoundError)
+    async def _graph_not_found(_: Request, exc: GraphNotFoundError) -> Response:
+        return _problem(
+            status=404,
+            code="GRAPH_NOT_FOUND",
+            title="Graph not found",
+            detail=str(exc),
+        )
+
     @app.exception_handler(AppError)
     async def _unexpected(_: Request, exc: AppError) -> Response:
         # Log the cause; tell the client nothing about our internals.
@@ -150,6 +160,7 @@ def register_error_handlers(app: FastAPI) -> None:
         _bad_month,
         _bad_token,
         _chat_unavailable,
+        _graph_not_found,
         _unexpected,
     )
     logger.debug("registered %d domain error handlers", len(_handlers))

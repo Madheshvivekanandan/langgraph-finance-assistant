@@ -1,0 +1,184 @@
+:root {
+  color-scheme: light dark;
+
+  /* ---- surfaces: canvas is tinted so a 1px hairline can do the containing ---- */
+  --bg-canvas:        #f6f7f9;  /* page background, behind everything */
+  --bg-surface:       #ffffff;  /* panels, cards, tiles */
+  --bg-subtle:        #eef1f5;  /* table headers, inset wells, chat bubbles */
+  --bg-hover:         #e8ecf2;  /* row hover, bar hover */
+  --bg-selected:      #e3ebfd;  /* selected row / active bar (accent-tinted) */
+
+  /* ---- borders: three tiers. -strong meets WCAG 1.4.11 3:1 for form controls ---- */
+  --border-subtle:    #e6e9ee;  /* table row rules, quiet dividers */
+  --border-default:   #d5dae1;  /* panel and card edges */
+  --border-strong:    #6b7480;  /* input/select boundaries — 4.74:1 on surface */
+
+  /* ---- text: four tiers, all AA on all three surface tiers (see table below) ---- */
+  --text-primary:     #14181f;
+  --text-secondary:   #4a5462;
+  --text-tertiary:    #5d6875;
+  --text-on-accent:   #ffffff;
+
+  /* ---- semantic ---- */
+  --accent:           #2f5bea;
+  --accent-hover:     #2449c4;
+  --positive:         #0f7a3d;  /* credit / money in */
+  --negative:         #b42318;  /* debit / money out — reserved for real loss */
+  --warning:          #8a5a00;  /* low-confidence review, needs-attention */
+
+  /* ---- chart neutrals: cool, matched to the UI neutrals (was warm, now unified) ---- */
+  --chart-surface:    #ffffff;
+  --chart-grid:       #e6e9ee;
+  --chart-axis:       #b8c0cb;
+  --chart-muted:      #5d6875;
+  --series-income:    #1a6590;
+  --series-expense:   #b4531f;
+
+  /* ---- spacing: 4px base, Ramp/Mercury both use this exact progression ---- */
+  --space-1:  0.25rem;  /*  4px */
+  --space-2:  0.5rem;   /*  8px */
+  --space-3:  0.75rem;  /* 12px */
+  --space-4:  1rem;     /* 16px */
+  --space-5:  1.25rem;  /* 20px */
+  --space-6:  1.5rem;   /* 24px */
+  --space-8:  2rem;     /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+
+  /* ---- radii: Ramp's doctrine, one step down (this app's panels are lighter) ---- */
+  --radius-xs:   4px;   /* swatches, chips, inline marks */
+  --radius-sm:   6px;   /* buttons, tags, badges */
+  --radius-md:   8px;   /* inputs, selects, stat tiles */
+  --radius-lg:  12px;   /* panels, cards */
+  --radius-full: 999px; /* pills */
+
+  /* ---- elevation: borders do the work. Only floating layers get a shadow. ---- */
+  --shadow-none: none;
+  --shadow-overlay:
+    0 0 3px 0 rgb(16 24 40 / 5%),
+    0 8px 12px 0 rgb(16 24 40 / 6%),
+    0 12px 20px 0 rgb(16 24 40 / 5%);
+
+  /* ---- type: six real steps, each visibly different from its neighbour ---- */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-numeric: var(--font-sans);   /* paired with font-variant-numeric: tabular-nums */
+
+  --text-xs:      0.75rem;   /* 12px — labels, captions, badges */
+  --text-sm:      0.875rem;  /* 14px — table cells, secondary UI */
+  --text-base:    1rem;      /* 16px — body */
+  --text-lg:      1.25rem;   /* 20px — panel headings */
+  --text-xl:      1.75rem;   /* 28px — stat tile values */
+  --text-2xl:     2.25rem;   /* 36px — page title */
+
+  --leading-tight:  1.15;
+  --leading-snug:   1.35;
+  --leading-normal: 1.55;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+
+  --tracking-label: 0.05em;  /* small uppercase only */
+  --tracking-tight: -0.01em; /* --text-xl and up */
+
+  /* ---- table density ---- */
+  --row-height:     2.75rem;  /* 44px — a row carries an interactive <select> */
+  --row-pad-y:      0.625rem;
+  --row-pad-x:      0.75rem;
+
+  /* ---- layout ---- */
+  --shell-max:      72rem;
+  --shell-pad-x:    var(--space-4);
+  /* ---- app shell (new: D2/D3) ---- */
+  --sidebar-w:      240px;
+  --chat-w:         360px;
+
+  /* ---- 16 category identity colours + 1 neutral.
+         Identity swatches beside a label — NOT a chart encoding. See CategoryBarChart. ---- */
+  --cat-groceries:     #416d19;
+  --cat-dining:        #a8471a;
+  --cat-transport:     #1a6590;
+  --cat-housing:       #6f42b8;
+  --cat-utilities:     #0d7268;
+  --cat-shopping:      #9c2a84;
+  --cat-entertainment: #c2673a;
+  --cat-subscriptions: #8f5fcf;
+  --cat-health:        #2c8a80;
+  --cat-education:     #2f62c9;
+  --cat-investments:   #5f8a34;
+  --cat-transfers:     #3583b0;
+  --cat-cash:          #8c5010;
+  --cat-fees:          #b84fa2;
+  --cat-income:        #5a76d8;
+  --cat-other:         #a97430;
+  --cat-uncategorized: #8b95a1;
+
+  /* ---- backwards-compatible aliases: keeps the rest of this sheet working ---- */
+  --surface:    var(--bg-surface);
+  --ink:        var(--text-primary);
+  --ink-muted:  var(--text-secondary);
+  --line:       var(--border-default);
+  --debit:      var(--negative);
+  --credit:     var(--positive);
+  --series-1:   var(--series-income);
+  --series-2:   var(--series-expense);
+  --grid:       var(--chart-grid);
+  --axis:       var(--chart-axis);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-canvas:      #0f1114;  /* never #000 — elevation needs headroom */
+    --bg-surface:     #171a1f;
+    --bg-subtle:      #1e222a;
+    --bg-hover:       #242933;
+    --bg-selected:    #1e2a46;
+
+    --border-subtle:  #23272f;
+    --border-default: #333a44;
+    --border-strong:  #697485;  /* 3.69:1 on --bg-surface */
+
+    --text-primary:   #e9ecf1;
+    --text-secondary: #aab3bf;
+    --text-tertiary:  #919aa6;
+    --text-on-accent: #0f1114;
+
+    --accent:         #8fa8ff;
+    --accent-hover:   #a8bcff;
+    --positive:       #5ed68b;
+    --negative:       #ff8f80;
+    --warning:        #e0b355;
+
+    /* Chart steps chosen against the dark surface — never a flip of the light values. */
+    --chart-surface:  #171a1f;
+    --chart-grid:     #262b33;
+    --chart-axis:     #3c4450;
+    --chart-muted:    #919aa6;
+    --series-income:  #5fb4dd;
+    --series-expense: #e08a56;
+
+    --shadow-overlay:
+      0 0 3px 0 rgb(0 0 0 / 40%),
+      0 8px 12px 0 rgb(0 0 0 / 32%),
+      0 12px 20px 0 rgb(0 0 0 / 24%);
+
+    --cat-groceries:     #8fc25e;
+    --cat-dining:        #e08a56;
+    --cat-transport:     #5fb4dd;
+    --cat-housing:       #b18de8;
+    --cat-utilities:     #3fb0a2;
+    --cat-shopping:      #e181c8;
+    --cat-entertainment: #efb08a;
+    --cat-subscriptions: #cdb3f2;
+    --cat-health:        #77cfc3;
+    --cat-education:     #7d9df0;
+    --cat-investments:   #b6da8f;
+    --cat-transfers:     #93cfea;
+    --cat-cash:          #d5a44e;
+    --cat-fees:          #f0aadb;
+    --cat-income:        #a9bdf7;
+    --cat-other:         #e7c684;
+    --cat-uncategorized: #77818f;
+  }
+}

@@ -42,19 +42,23 @@ export function StatementUpload({ onUploaded }: Props) {
   return (
     <form className="panel" onSubmit={handleSubmit}>
       <h2>Upload a statement</h2>
-      <label htmlFor={inputId}>Bank statement (CSV)</label>
-      <div className="upload-row">
-        <input
-          id={inputId}
-          ref={inputRef}
-          type="file"
-          accept=".csv,text/csv"
-          onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-          aria-describedby={upload.status === 'error' ? `${inputId}-error` : undefined}
-        />
-        <button type="submit" disabled={!file || isUploading}>
-          {isUploading ? 'Uploading…' : 'Upload'}
-        </button>
+      {/* Still a real file input with a real label - no custom widget, no
+          drag-and-drop in this pass. The dashed border is the only new thing. */}
+      <div className="dropzone">
+        <label htmlFor={inputId}>Bank statement (CSV)</label>
+        <div className="upload-row">
+          <input
+            id={inputId}
+            ref={inputRef}
+            type="file"
+            accept=".csv,text/csv"
+            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            aria-describedby={upload.status === 'error' ? `${inputId}-error` : undefined}
+          />
+          <button type="submit" disabled={!file || isUploading}>
+            {isUploading ? 'Uploading…' : 'Upload'}
+          </button>
+        </div>
       </div>
       {upload.status === 'error' && (
         <p className="message message-error" id={`${inputId}-error`} role="alert">
