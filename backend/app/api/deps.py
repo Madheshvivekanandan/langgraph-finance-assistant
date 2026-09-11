@@ -6,6 +6,7 @@ from fastapi import Depends, Request
 
 from app.db.session import get_session_factory
 from app.services.chat_service import ChatService
+from app.services.graph_topology_service import GraphTopologyService
 from app.services.statement_ingestion_service import StatementIngestionService
 from app.services.statement_query_service import StatementQueryService
 from app.services.statement_review_service import StatementReviewService
@@ -49,6 +50,11 @@ def get_transaction_query_service() -> TransactionQueryService:
     return TransactionQueryService(get_session_factory())
 
 
+def get_graph_topology_service() -> GraphTopologyService:
+    """Build the graph-topology introspection service. It is stateless."""
+    return GraphTopologyService()
+
+
 def get_chat_service(request: Request) -> ChatService:
     """Wrap the checkpointed agent the lifespan built, on `app.state.chat_agent`.
 
@@ -72,3 +78,4 @@ TransactionQueryServiceDep = Annotated[
     TransactionQueryService, Depends(get_transaction_query_service)
 ]
 ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]
+GraphTopologyServiceDep = Annotated[GraphTopologyService, Depends(get_graph_topology_service)]
