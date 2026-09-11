@@ -45,6 +45,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   })
   if (!response.ok) throw await toApiError(response)
+  // A 204 (e.g. DELETE) has no body; response.json() would throw on it.
+  if (response.status === 204) return undefined as T
   return (await response.json()) as T
 }
 
@@ -122,4 +124,8 @@ export function submitStatementReview(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ decisions }),
   })
+}
+
+export function discardStatement(statementId: number): Promise<void> {
+  return request<void>(`/statements/${statementId}`, { method: 'DELETE' })
 }

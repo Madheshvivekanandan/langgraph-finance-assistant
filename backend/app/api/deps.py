@@ -7,6 +7,7 @@ from fastapi import Depends, Request
 from app.db.session import get_session_factory
 from app.services.chat_service import ChatService
 from app.services.graph_topology_service import GraphTopologyService
+from app.services.statement_discard_service import StatementDiscardService
 from app.services.statement_ingestion_service import StatementIngestionService
 from app.services.statement_query_service import StatementQueryService
 from app.services.statement_review_service import StatementReviewService
@@ -28,6 +29,11 @@ def get_statement_ingestion_service(request: Request) -> StatementIngestionServi
 def get_statement_review_service(request: Request) -> StatementReviewService:
     """Build the review service around the same checkpointed graph."""
     return StatementReviewService(get_session_factory(), request.app.state.statement_graph)
+
+
+def get_statement_discard_service(request: Request) -> StatementDiscardService:
+    """Build the discard service around the same checkpointed graph."""
+    return StatementDiscardService(get_session_factory(), request.app.state.statement_graph)
 
 
 def get_statement_query_service() -> StatementQueryService:
@@ -70,6 +76,9 @@ StatementIngestionServiceDep = Annotated[
 ]
 StatementQueryServiceDep = Annotated[StatementQueryService, Depends(get_statement_query_service)]
 StatementReviewServiceDep = Annotated[StatementReviewService, Depends(get_statement_review_service)]
+StatementDiscardServiceDep = Annotated[
+    StatementDiscardService, Depends(get_statement_discard_service)
+]
 SummaryServiceDep = Annotated[SummaryService, Depends(get_summary_service)]
 TransactionCategoryServiceDep = Annotated[
     TransactionCategoryService, Depends(get_transaction_category_service)

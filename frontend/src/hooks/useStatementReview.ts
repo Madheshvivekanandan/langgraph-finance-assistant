@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ApiError, getStatementReview, submitStatementReview } from '../api/financeApi'
+import {
+  ApiError,
+  discardStatement,
+  getStatementReview,
+  submitStatementReview,
+} from '../api/financeApi'
 import type { StatementReview } from '../interfaces/statementReview'
 
 type LoadStatus = 'loading' | 'ready' | 'error'
@@ -72,5 +77,21 @@ export function useStatementReview(statementId: number | null, onResolved: () =>
     }
   }, [statementId, review, choices, onResolved])
 
-  return { review, choices, setChoice, submit, status, errorMessage, isSubmitting }
+  const discard = useCallback(async () => {
+    // Gated on statementId only (not `review`), so this also works from the
+    // `error` branch, where `review` is already null.
+    if (statementId === null) return
+    setIsSubmitting(true)
+    try {
+      await discardStatement(statementId)
+      setReview(null)
+      onResolved()
+    } catch (error) {
+      setErrorMessage(describe(error))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [statementId, onResolved])
+
+  return { review, choices, setChoice, submit, discard, status, errorMessage, isSubmitting }
 }

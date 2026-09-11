@@ -6,6 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, File, Query, Response, UploadFile, status
 
 from app.api.deps import (
+    StatementDiscardServiceDep,
     StatementIngestionServiceDep,
     StatementQueryServiceDep,
     StatementReviewServiceDep,
@@ -144,3 +145,29 @@ def submit_statement_review(
     ]
     statement = service.submit(statement_id, decisions)
     return StatementOut.model_validate(statement)
+
+
+@router.delete(
+    "/{statement_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    summary="Discard a statement stuck awaiting review",
+    description=(
+        "Permanently deletes the statement row, freeing its file_hash so the same file "
+        "can be re-uploaded. Only allowed while AWAITING_REVIEW: 404 if the statement "
+        "does not exist (including one already discarded); 409 if it is in any other "
+        "status."
+    ),
+)
+def discard_statement(
+    statement_id: int,
+    service: StatementDiscardServiceDep,
+) -> Response:
+    """Discard a statement paused for review.
+
+    Raises:
+        StatementNotFoundError: If no such statement exists.
+        StatementNotAwaitingReviewError: If it is not paused for review.
+    """
+    service.discard(statement_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

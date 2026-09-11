@@ -75,7 +75,7 @@ Monthly summary (income/expense/net) as KPI tiles, category breakdown as a **bar
 `interrupt()` human-in-the-loop review of low-confidence categorizations (the classic HITL lesson)  ✅ **done**  *(learn: `interrupt()`/`Command(resume=...)`, resuming a suspended run from a real checkpoint)*
 A model categorization below a confidence threshold (`LowConfidencePolicy`, default 0.75, gated on `categorized_by is LLM` so a no-key run never pauses) now stops the statement pipeline before `store_transactions`: `mark_awaiting_review` sets the status, `review_low_confidence` calls `interrupt()` with the pending rows and applies whatever decisions come back on resume. The upload endpoint stays synchronous 201; a statement can come back `AWAITING_REVIEW` with zero transactions until `GET`/`POST /api/v1/statements/{id}/review` resolves it. **Done when:** an upload with an unsure categorization leaves the statement awaiting review, the pending rows are visible and correctable in the UI, and approving resumes the same run (same `thread_id`) rather than re-ingesting. See `.agent-loop/runs/2026-09-09-hitl-review/plan.md` for the full rationale, including why a statement nobody reviews simply stays `AWAITING_REVIEW` forever (D8) rather than expiring.
 
-**Follow-up, out of scope for this run:** a discard/abandon endpoint for a statement stuck `AWAITING_REVIEW` that nobody wants to finish reviewing — today the only ways out are "review it" or delete the row directly, and `file_hash` being `UNIQUE` means re-uploading the same file will not start a fresh run.
+**Follow-up — done:** `DELETE /api/v1/statements/{id}` discards a statement stuck `AWAITING_REVIEW`: a hard delete (no `DISCARDED` status), guarded to that one status, that frees the row's `UNIQUE file_hash` so the same file can be re-uploaded. Best-effort checkpoint cleanup via `delete_thread` runs first; the row delete itself is not best-effort. A Discard button (native `confirm()`) sits in both `StatementReviewPanel` branches. See `.agent-loop/runs/2026-09-11-discard-stranded-statements/plan.md`.
 
 Embed a live graph view in the frontend  ✅ **done**  *(learn: `get_graph()` introspection — the compiled graph knows its own topology)*
 `GET /api/v1/graphs/{name}` introspects the live compiled graph per request (never a checked-in
@@ -86,9 +86,7 @@ frontend rebuild: sidebar shell, five routes (Overview / Transactions / Statemen
 Pipeline), chat docked as a rail that survives navigation, and the screenshot gate extended from
 4 to 24 states including a mermaid contrast assertion.
 
-Still open: PDF statement parsing; multi-month insights ("recurring subscriptions", anomaly flags);
-a discard endpoint for a statement stuck AWAITING_REVIEW (one exists in the dev DB right now: a
-Studio-resumed run completes in Studio's own checkpoint store, so the app's row stays paused forever).
+Still open: PDF statement parsing; multi-month insights ("recurring subscriptions", anomaly flags).
 
 ## Simplicity guardrails
 

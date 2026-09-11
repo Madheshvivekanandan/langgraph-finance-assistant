@@ -30,6 +30,11 @@
   border-left: 3px solid var(--warning);
 }
 
+.panel-review-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 /* ---------- buttons ---------- */
 
 button {
